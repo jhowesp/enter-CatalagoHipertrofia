@@ -19,9 +19,9 @@ Decisões já confirmadas:
 2. Catálogo lê **direto do banco**.
 3. Placeholders neutros nos produtos de demonstração (nunca imagens geradas por IA representando produto real).
 4. Login do painel: **e-mail + senha**.
-5. Liberação do primeiro administrador: **por e-mail na lista de administradores** (o e-mail será
-   informado pelo usuário; até lá o fluxo de primeiro acesso descrito na seção 3 libera o painel
-   uma única vez, e depois é desativado automaticamente).
+5. Administrador liberado por e-mail na lista `admin_users`, já definido:
+   **`hipertrofia.publicidade@gmail.com`**. A senha **não** é usada, não é gravada no projeto e não
+   aparece no plano: o cadastro é feito por você na própria tela `/admin/login`, digitando sua senha.
 6. Dados reais de contato, centralizados em `src/config/store.ts`:
 
    | Campo | Valor |
@@ -80,9 +80,12 @@ Trigger `set_updated_at()` em `products`, `categories`, `brands`, `quotes`.
 - `public.is_admin()` — `security definer`, `stable`, `set search_path = public`: verdadeiro se
   `lower(auth.jwt() ->> 'email')` existe em `admin_users`. É a **única** fonte de autorização
   administrativa, usada pelas policies e pelo storage.
-- `public.claim_first_admin()` — `security definer`: insere o e-mail do usuário autenticado em
-  `admin_users` **somente se a tabela estiver vazia**; retorna boolean. Desativa-se sozinho após o
-  primeiro administrador. (Fluxo de primeiro acesso da seção 3.)
+
+### Administrador
+
+`admin_users` é populada por seed com **`hipertrofia.publicidade@gmail.com`** (e-mail do dono da loja).
+Não há cadastro de administrador pela aplicação: quem não estiver nessa lista pode até criar conta, mas
+não obtém nenhuma permissão. Para adicionar outro administrador no futuro basta inserir o e-mail na tabela.
 
 ### Views de leitura pública (isolamento de colunas sensíveis)
 
@@ -112,7 +115,7 @@ Para categorias e marcas não há coluna sensível: a própria RLS resolve (poli
 Grants explícitos: `select` em `public_products` para `anon, authenticated`; `select` em
 `categories`/`brands`; `insert` em `quotes`/`quote_items`; privilégios de CRUD em `products`,
 `categories`, `brands`, `quotes`, `quote_items` para `authenticated` (a RLS limita a `is_admin()`);
-`execute` em `is_admin()` e `claim_first_admin()`; **nenhum** `select` direto em `products` para `anon`.
+`execute` em `is_admin()`; **nenhum** `select` direto em `products` para `anon`.
 
 Conferência obrigatória: `supabase_get_table_schema` em cada tabela, confirmando RLS habilitada **e**
 as policies listadas (uma migration pode passar sem proteger a tabela).
@@ -165,11 +168,14 @@ Caminho do objeto: `products/{uuid}.{ext}`; a URL pública é salva em `products
   client com `setTimeout(..., 0)`. Chama a RPC `is_admin()` para saber se o usuário é administrador.
 - `src/admin/auth/require-admin.tsx` — guarda de rota: carregando → spinner; sem sessão → `/admin/login`;
   sessão sem autorização → tela "acesso não autorizado" com botão sair.
-- **Primeiro acesso**: em `/admin/login` existe a aba "Criar acesso de administrador" (signup). Após o
-  cadastro, o app chama `claim_first_admin()`: se for o primeiro usuário do sistema, ele é promovido; se
-  `admin_users` já tiver alguém, a conta é criada mas exibe "conta criada, sem acesso administrativo".
-  Assim que o e-mail do administrador for informado, ele é inserido em `admin_users` por seed e o fluxo
-  de primeiro acesso deixa de promover qualquer um (a tabela não estará mais vazia).
+- **Primeiro acesso** (feito por você, uma única vez): em `/admin/login`, aba
+  "Criar acesso de administrador", informe o e-mail `hipertrofia.publicidade@gmail.com` e **escolha sua
+  senha** na tela. Com a auto-confirmação de e-mail ativada, o acesso é liberado na hora. A senha não
+  passa por mim, não vai para o código e não fica gravada no projeto. Se preferir, você pode criar a
+  conta antes e eu ajusto a policy — mas `admin_users` já estará com o seu e-mail, então o acesso
+  funciona assim que o cadastro existir.
+- Qualquer outra pessoa que se cadastrar verá "conta sem acesso administrativo" e não lerá nem gravará
+  nada no banco.
 
 ---
 
@@ -399,8 +405,9 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
 - [ ] Migration cria `categories`, `brands`, `products`, `quotes`, `quote_items`, `admin_users` com FKs,
       `CHECK` de status, colunas geradas (`effective_price`, `discount_percent`, `margin_percent`), `is_demo`,
       trigger de `updated_at` e índices.
-- [ ] Migration cria `public.is_admin()`, `public.claim_first_admin()` e a view `public.public_products`
+- [ ] Migration cria `public.is_admin()` e a view `public.public_products`
       (`security_invoker = false`) sem `cost_price`, `margin_percent` ou `is_demo`, filtrando `active = true`.
+- [ ] Seed insere `hipertrofia.publicidade@gmail.com` em `admin_users`.
 - [ ] Migration habilita RLS em **todas** as 6 tabelas com as policies da seção 1 e sem policy de `select`
       em `products` para `anon`.
 - [ ] `supabase_get_table_schema` confirma, tabela por tabela, RLS habilitada e policies listadas.
@@ -422,7 +429,8 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
       WhatsApp → confirmar → limpar carrinho.
 - [ ] `src/admin/auth/*` registra `onAuthStateChange` antes de `getSession()`, guarda sessão e usuário,
       defer chamadas ao client e bloqueia `/admin*` para não administradores.
-- [ ] `/admin/login` com entrar e criar acesso (e-mail + senha), chamando `claim_first_admin()` no cadastro.
+- [ ] `/admin/login` com entrar e criar acesso (e-mail + senha) e mensagem clara de "sem acesso
+      administrativo" para e-mail fora de `admin_users`; nenhuma senha é registrada no código.
 - [ ] `/admin` com os 5 indicadores do dashboard e os orçamentos recentes.
 - [ ] `/admin/produtos` com tabela (custo, margem, estoque, ativo, destaque) e formulário de criar/editar
       com upload de imagem.
@@ -457,6 +465,8 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
 - [ ] `/produto/slug-inexistente` mostra estado de não encontrado, não tela em branco.
 - [ ] `/admin` sem sessão redireciona para `/admin/login`; usuário autenticado fora de `admin_users` vê
       "acesso não autorizado" e não consegue ler produto, orçamento ou gravar nada.
+- [ ] Login com `hipertrofia.publicidade@gmail.com` acessa o dashboard; um segundo e-mail cadastrado
+      não obtém permissão nenhuma.
 - [ ] Administrador logado cria, edita, ativa/desativa, altera preço, promoção, custo, estoque, categoria,
       marca, destaque e specs, e a alteração aparece no catálogo público.
 - [ ] Upload de imagem no admin gera URL pública em `product-images` e a imagem aparece no card e na
