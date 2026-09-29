@@ -1,0 +1,201 @@
+create or replace function public.create_quote(
+  p_customer_name text,
+  p_customer_whatsapp text,
+  p_notes text,
+  p_items jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_quote_id uuid;
+  v_total numeric(10,2);
+  v_requested integer;
+  v_resolved integer;
+  v_units integer;
+begin
+  if length(trim(coalesce(p_customer_name, ''))) < 2 or length(trim(p_customer_name)) > 120 then
+    raise exception 'invalid_customer_name';
+  end if;
+
+  if length(regexp_replace(coalesce(p_customer_whatsapp, ''), '\D', '', 'g')) < 10 then
+    raise exception 'invalid_customer_whatsapp';
+  end if;
+
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'empty_quote';
+  end if;
+
+  if jsonb_array_length(p_items) > 100 then
+    raise exception 'too_many_items';
+  end if;
+
+  select count(*) into v_requested
+  from (
+    select (item ->> 'product_id') as product_id
+    from jsonb_array_elements(p_items) as item
+    where coalesce(nullif(item ->> 'quantity', '')::integer, 0) > 0
+      and coalesce(item ->> 'product_id', '') <> ''
+    group by 1
+  ) req;
+
+  if v_requested = 0 then
+    raise exception 'empty_quote';
+  end if;
+
+  select count(*), coalesce(sum(r.quantity), 0), coalesce(sum(r.quantity * p.effective_price), 0)
+    into v_resolved, v_units, v_total
+  from (
+    select (item ->> 'product_id')::uuid as product_id,
+           sum(coalesce(nullif(item ->> 'quantity', '')::integer, 0)) as quantity
+    from jsonb_array_elements(p_items) as item
+    where coalesce(nullif(item ->> 'quantity', '')::integer, 0) > 0
+      and coalesce(item ->> 'product_id', '') <> ''
+    group by 1
+  ) r
+  join public.products p on p.id = r.product_id and p.active = true;
+
+  if v_resolved <> v_requested or v_units = 0 then
+    raise exception 'product_unavailable';
+  end if;
+
+  insert into public.quotes (customer_name, customer_whatsapp, notes, total, status)
+  values (
+    trim(p_customer_name),
+    trim(p_customer_whatsapp),
+    nullif(trim(coalesce(p_notes, '')), ''),
+    v_total,
+    'new'
+  )
+  returning id into v_quote_id;
+
+  insert into public.quote_items (quote_id, product_id, product_name, quantity, unit_price, subtotal)
+  select v_quote_id, r.product_id, p.name, r.quantity, p.effective_price, r.quantity * p.effective_price
+  from (
+    select (item ->> 'product_id')::uuid as product_id,
+           sum(coalesce(nullif(item ->> 'quantity', '')::integer, 0)) as quantity
+    from jsonb_array_elements(p_items) as item
+    where coalesce(nullif(item ->> 'quantity', '')::integer, 0) > 0
+      and coalesce(item ->> 'product_id', '') <> ''
+    group by 1
+  ) r
+  join public.products p on p.id = r.product_id and p.active = true;
+
+  return jsonb_build_object('quote_id', v_quote_id, 'total', v_total, 'units', v_units);
+end;
+$$;
+
+do $$
+declare
+  v_p1 uuid;
+  v_p2 uuid;
+  v_p1_price numeric(10,2);
+  v_p2_price numeric(10,2);
+  v_result jsonb;
+  v_quote_id uuid;
+  v_expected numeric(10,2);
+  v_error text;
+  v_coherent integer;
+begin
+  select id, effective_price into v_p1, v_p1_price from public.products where slug = 'whey-protein-concentrado-900g';
+  select id, effective_price into v_p2, v_p2_price from public.products where slug = 'creatina-monohidratada-300g';
+
+  if v_p1 is null or v_p2 is null then
+    raise exception 'self_test_setup_failed: produtos de teste nao encontrados';
+  end if;
+
+  v_expected := (2 * v_p1_price) + (1 * v_p2_price);
+
+  select public.create_quote(
+    'TESTE INTERNO',
+    '(19) 99999-9999',
+    'orcamento de teste automatico',
+    jsonb_build_array(
+      jsonb_build_object('product_id', v_p1, 'quantity', 2),
+      jsonb_build_object('product_id', v_p2, 'quantity', 1)
+    )
+  ) into v_result;
+
+  v_quote_id := (v_result ->> 'quote_id')::uuid;
+
+  if v_quote_id is null then
+    raise exception 'self_test_failed: orcamento nao retornou id';
+  end if;
+
+  if (v_result ->> 'total')::numeric <> v_expected then
+    raise exception 'self_test_failed: total % diferente do esperado %', (v_result ->> 'total'), v_expected;
+  end if;
+
+  if (select count(*) from public.quotes where id = v_quote_id) <> 1 then
+    raise exception 'self_test_failed: orcamento nao foi gravado';
+  end if;
+
+  if (select count(*) from public.quote_items where quote_id = v_quote_id) <> 2 then
+    raise exception 'self_test_failed: esperava 2 itens no orcamento';
+  end if;
+
+  select count(*) into v_coherent
+  from public.quote_items
+  where quote_id = v_quote_id
+    and subtotal = quantity * unit_price;
+
+  if v_coherent <> 2 then
+    raise exception 'self_test_failed: subtotal incoerente em % item(ns)', v_coherent;
+  end if;
+
+  if (select status from public.quotes where id = v_quote_id) <> 'new' then
+    raise exception 'self_test_failed: status inicial diferente de new';
+  end if;
+
+  update public.quotes set status = 'in_progress' where id = v_quote_id;
+
+  if (select status from public.quotes where id = v_quote_id) <> 'in_progress' then
+    raise exception 'self_test_failed: status nao pode ser alterado';
+  end if;
+
+  delete from public.quotes where id = v_quote_id;
+
+  if (select count(*) from public.quote_items where quote_id = v_quote_id) <> 0 then
+    raise exception 'self_test_failed: itens do orcamento de teste nao foram removidos';
+  end if;
+
+  v_error := null;
+  begin
+    perform public.create_quote(
+      'TESTE INTERNO',
+      '(19) 99999-9999',
+      null,
+      jsonb_build_array(jsonb_build_object('product_id', gen_random_uuid(), 'quantity', 1))
+    );
+  exception when others then
+    v_error := sqlerrm;
+  end;
+
+  if v_error is null or v_error not like '%product_unavailable%' then
+    raise exception 'self_test_failed: produto inexistente nao foi recusado (%)', coalesce(v_error, 'sem erro');
+  end if;
+
+  v_error := null;
+  begin
+    perform public.create_quote('X', '(19) 99999-9999', null, jsonb_build_array(jsonb_build_object('product_id', v_p1, 'quantity', 1)));
+  exception when others then
+    v_error := sqlerrm;
+  end;
+
+  if v_error is null or v_error not like '%invalid_customer_name%' then
+    raise exception 'self_test_failed: nome invalido nao foi recusado (%)', coalesce(v_error, 'sem erro');
+  end if;
+
+  v_error := null;
+  begin
+    perform public.create_quote('TESTE INTERNO', '123', null, jsonb_build_array(jsonb_build_object('product_id', v_p1, 'quantity', 1)));
+  exception when others then
+    v_error := sqlerrm;
+  end;
+
+  if v_error is null or v_error not like '%invalid_customer_whatsapp%' then
+    raise exception 'self_test_failed: whatsapp invalido nao foi recusado (%)', coalesce(v_error, 'sem erro');
+  end if;
+end $$;

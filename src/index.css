@@ -1,93 +1,103 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Identidade HIPERTROFIA SUPLEMENTOS
+ * Tema escuro fixo: preto/grafite de fundo, vermelho como destaque,
+ * branco/cinza para textos secundários.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 356 88% 47%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 356 92% 60%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 56%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 8%;
 
-    --sidebar-background: 0 0% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 18%;
+    --ring: 356 88% 47%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.75rem;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --gradient-hero: radial-gradient(
+        circle at 18% 12%,
+        hsl(356 88% 47% / 0.38),
+        transparent 58%
+      ),
+      radial-gradient(circle at 88% 82%, hsl(356 92% 60% / 0.18), transparent 55%),
+      linear-gradient(158deg, hsl(0 0% 11%) 0%, hsl(0 0% 4%) 62%);
+    --gradient-primary: linear-gradient(135deg, hsl(356 88% 47%), hsl(356 92% 60%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 9%) 0%, hsl(0 0% 6%) 100%);
+    --gradient-soft: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 7%) 100%);
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --shadow-card: 0 18px 44px -28px hsl(0 0% 0% / 0.95);
+    --shadow-glow: 0 0 42px hsl(356 88% 47% / 0.34);
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 356 88% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 356 88% 47%;
   }
 
+  /* A loja é escura por identidade. Mantemos .dark idêntico para que
+   * qualquer componente shadcn que dependa da classe se comporte igual. */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 356 88% 47%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 356 92% 60%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 8%;
+    --border: 0 0% 16%;
+    --input: 0 0% 18%;
+    --ring: 356 88% 47%;
   }
 }
 
@@ -96,8 +106,46 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: theme("fontFamily.sans");
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: theme("fontFamily.display");
+    @apply uppercase tracking-tight;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}
+
+@layer utilities {
+  .surface-card {
+    background-image: var(--gradient-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 28px hsl(var(--primary) / 0.45);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -105,5 +153,5 @@ html,
 body,
 #root {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
 }

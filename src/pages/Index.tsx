@@ -1,23 +1,123 @@
-import { useTranslation } from "react-i18next";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-const Index = () => {
-  const { t } = useTranslation();
+import { CategoryGrid } from "@/components/home/category-grid";
+import { BrandStrip } from "@/components/home/brand-strip";
+import { Hero } from "@/components/home/hero";
+import { ProductRail } from "@/components/home/product-rail";
+import { SectionHeading } from "@/components/home/section-heading";
+import { WhatsappCtaBand } from "@/components/home/whatsapp-cta-band";
+import { PageShell } from "@/components/layout/page-shell";
+import { INSTAGRAM_URL, STORE } from "@/config/store";
+import { useAddToQuote } from "@/hooks/use-add-to-quote";
+import { useSeo } from "@/hooks/use-seo";
+import {
+  listBrands,
+  listCategories,
+  listFeaturedProducts,
+  listOfferProducts,
+} from "@/services/catalog";
+
+const Home = () => {
+  const addToQuote = useAddToQuote();
+
+  const { data: featured = [], isLoading: loadingFeatured } = useQuery({
+    queryKey: ["products", "featured"],
+    queryFn: () => listFeaturedProducts(8),
+  });
+
+  const { data: offers = [], isLoading: loadingOffers } = useQuery({
+    queryKey: ["products", "offers"],
+    queryFn: () => listOfferProducts(4),
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: listCategories,
+  });
+
+  const { data: brands = [] } = useQuery({
+    queryKey: ["brands"],
+    queryFn: listBrands,
+  });
+
+  const storeJsonLd = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "Store",
+      name: STORE.name,
+      description: STORE.description,
+      telephone: `+${STORE.whatsappNumber}`,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: STORE.city,
+        addressRegion: STORE.state,
+        addressCountry: "BR",
+      },
+      openingHours: STORE.openingHours,
+      sameAs: [INSTAGRAM_URL],
+    }),
+    [],
+  );
+
+  useSeo({
+    title: `${STORE.logoTop.toUpperCase()} ${STORE.logoBottom.toUpperCase()} | Suplementos em ${STORE.locationLabel}`,
+    description: `Catálogo de whey protein, creatina, pré-treino, hipercalórico, vitaminas e acessórios em ${STORE.locationLabel}. Monte seu orçamento e finalize pelo WhatsApp.`,
+    path: "/",
+    jsonLd: storeJsonLd,
+  });
 
   return (
-    <div className="relative flex h-full w-full flex-col bg-gradient-to-b from-[#4E54C8] to-[#A8C0FF] p-[32px] max-md:pb-[32px] max-md:pl-[20px] max-md:pr-[20px] max-md:pt-[32px]">
-      <div className="text-[26px] text-white max-md:text-[22px]">
-        {t("common.appName")}
+    <PageShell>
+      <Hero />
+
+      <div className="container space-y-14 py-12">
+        <section>
+          <SectionHeading
+            title="Mais vendidos"
+            description="Os produtos que mais saem na loja, escolhidos por quem treina pesado."
+            href="/catalogo"
+          />
+          <ProductRail
+            products={featured}
+            onAdd={addToQuote}
+            loading={loadingFeatured}
+          />
+        </section>
+
+        {(loadingOffers || offers.length > 0) && (
+          <section>
+            <SectionHeading
+              title="Ofertas"
+              description="Descontos ativos enquanto durar o estoque. Sem compromisso: monta o orçamento e confirma no WhatsApp."
+              href="/catalogo?ordem=discount"
+              linkLabel="Ver todas as ofertas"
+            />
+            <ProductRail products={offers} onAdd={addToQuote} loading={loadingOffers} />
+          </section>
+        )}
+
+        <section>
+          <SectionHeading
+            title="Categorias"
+            description="Navegue direto pelo que você precisa."
+            href="/catalogo"
+          />
+          <CategoryGrid categories={categories} />
+        </section>
+
+        <section>
+          <SectionHeading
+            title="Principais marcas"
+            description="Trabalhamos com as marcas mais procuradas do mercado."
+          />
+          <BrandStrip brands={brands} />
+        </section>
+
+        <WhatsappCtaBand />
       </div>
-      <div className="flex h-full flex-1 flex-col items-center justify-center">
-        <div className="text-center text-[48px] text-white max-md:text-[26px]">
-          {t("home.hero.title")}
-        </div>
-        <div className="text-center text-[24px] text-white max-md:text-[16px]">
-          {t("home.hero.subtitle")}
-        </div>
-      </div>
-    </div>
+    </PageShell>
   );
 };
 
-export default Index;
+export default Home;

@@ -495,3 +495,42 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
       `/orcamento/finalizar`, `/admin/login` e `/admin`: sem overflow horizontal, alvos de toque
       confortáveis, contraste legível e imagens sem distorção.
 - [ ] `get_console_logs` sem erros de runtime no fluxo público e no painel.
+
+---
+
+## Estado da entrega (verificado)
+
+### Entregue e verificado
+
+- [x] Enter Cloud conectado; cadastro público de usuário **desativado** (`disable_signup: true`).
+- [x] Tabelas `categories`, `brands`, `products`, `quotes`, `quote_items`, `admin_users` com FKs,
+      `CHECK` de status, colunas geradas (`effective_price`, `discount_percent`, `margin_percent`),
+      `is_demo`, trigger de `updated_at` e índices.
+- [x] RLS habilitada nas 6 tabelas, conferida com consulta às políticas do Postgres.
+- [x] View `public_products` sem `cost_price`, `margin_percent` e `is_demo`, só com produtos ativos.
+- [x] `create_quote` (security definer) com autoteste de migração: cria, valida total/itens/status,
+      apaga o próprio registro de teste e recusa produto inexistente, nome inválido e WhatsApp inválido.
+- [x] Seed: 10 categorias, 6 marcas, 13 produtos com `is_demo = true`; administrador
+      `hipertrofia.publicidade@gmail.com` na lista de administradores.
+- [x] Bucket `product-images` público com 4 policies (leitura pública; escrita só para administrador).
+- [x] Verificação anônima real pela API pública: criar orçamento retorna HTTP 200 com total 319,80
+      (2 x 159,90 do preço promocional); ler `quotes` devolve vazio; ler `products` devolve
+      401/42501 (permission denied); ler `public_products` funciona; pedir `cost_price` devolve 42703.
+- [x] Orçamento de teste removido: `quotes` e `quote_items` em 0 linhas.
+- [x] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [x] Telas conferidas por captura: home em 390px e 1280px, catálogo em 390px e 1280px,
+      página de produto em 390px e `/admin` (redireciona para o login).
+- [x] Correções visuais após verificação: botão do card deixou de transbordar; hero trocou a alegação
+      genérica de desconto pelos dados reais de atendimento.
+
+### Pendente de verificação (depende da conta de administrador)
+
+- [ ] Fluxos autenticados do painel: cadastrar/editar/excluir produto, alterar preço, promoção, custo,
+      estoque, categoria, marca, destaque, specs, upload de imagem, CRUD de categorias e marcas,
+      alteração de status do orçamento e detalhe do orçamento.
+- [ ] Importação CSV ponta a ponta no navegador.
+
+Para isso a conta de administrador precisa existir com o e-mail `hipertrofia.publicidade@gmail.com`.
+Como o cadastro público está desativado, há dois caminhos: criar a conta pelo mecanismo
+administrativo do Enter Cloud, ou eu ativar o cadastro por um instante para você criar a conta com
+sua senha e desativar em seguida.

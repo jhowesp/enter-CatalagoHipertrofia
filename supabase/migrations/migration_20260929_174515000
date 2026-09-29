@@ -1,0 +1,2 @@
+delete from public.quote_items where quote_id = '6955a6e7-649c-4354-bbad-e999158bc080'::uuid;
+delete from public.quotes where id = '6955a6e7-649c-4354-bbad-e999158bc080'::uuid and customer_name = 'TESTE ANONIMO';
