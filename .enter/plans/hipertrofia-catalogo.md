@@ -21,7 +21,10 @@ Decisões já confirmadas:
 4. Login do painel: **e-mail + senha**.
 5. Administrador liberado por e-mail na lista `admin_users`, já definido:
    **`hipertrofia.publicidade@gmail.com`**. A senha **não** é usada, não é gravada no projeto e não
-   aparece no plano: o cadastro é feito por você na própria tela `/admin/login`, digitando sua senha.
+   aparece no plano.
+6. **Sem cadastro público de usuário**: o cadastro fica desativado no backend e `/admin/login` contém
+   somente e-mail, senha e o botão Entrar. A conta do administrador é criada pelo mecanismo
+   administrativo seguro do Enter Cloud e depois autorizada por `admin_users`.
 6. Dados reais de contato, centralizados em `src/config/store.ts`:
 
    | Campo | Valor |
@@ -150,32 +153,38 @@ Caminho do objeto: `products/{uuid}.{ext}`; a URL pública é salva em `products
 2. `is_demo` é interno e não aparece no catálogo público.
 3. Orçamentos não podem ser lidos anonimamente: só `is_admin()` lê `quotes`/`quote_items`.
 4. O painel só é acessível a usuários autenticados **e** presentes em `admin_users`; a checagem
-   decisiva é a policy no banco, nunca o `localStorage` ou `sessionStorage`.
+   decisiva é a policy no banco, nunca estado de frontend, `localStorage` ou `sessionStorage`.
 5. Produtos/categorias/marcas públicos exibem somente `active = true`.
 6. Nenhuma escrita administrativa parte do cliente sem policy: criar/editar/excluir produto ou
    categoria exige `is_admin()` no banco.
 7. `robots.txt` bloqueia `/admin` e as páginas do painel levam `noindex`.
+8. **Sem cadastro público de usuário**: a aplicação não oferece signup em nenhuma tela, então ninguém
+   obtém privilégio administrativo criando conta pela interface.
 
 ---
 
 ## 3. Autenticação do painel
 
-- **E-mail + senha** via `supabase.auth` (implementar login **e** cadastro, como manda o padrão; nunca
-  signup anônimo). `supabase_configure_auth` liga auto-confirmação de e-mail e
-  `emailRedirectTo: ${window.location.origin}/` no `signUp`.
+- **E-mail + senha** via `supabase.auth`, com **cadastro público desativado**
+  (`supabase_configure_auth` → `disable_signup: true`; nenhum usuário consegue criar conta pela
+  aplicação). A conta do administrador é criada pelo mecanismo administrativo seguro do Enter Cloud e
+  depois autorizada por `admin_users`. *(Se essa criação não estiver disponível para você na hora,
+  eu ligo o cadastro temporariamente, você cria a conta com sua senha e eu desativo de novo — nada
+  disso envolve eu ver ou guardar senha.)*
+- `/admin/login` contém **somente**: campo de e-mail, campo de senha e botão **Entrar**
+  (`signInWithPassword`). Sem aba de cadastro, sem link de "criar conta", sem cadastro de
+  administrador pela interface pública. Em sucesso, redireciona para `/admin`.
 - `src/admin/auth/use-admin-session.ts` — registra `supabase.auth.onAuthStateChange` **antes** de
-  `getSession()`, guarda `user` **e** `session`, nunca usa callback `async`, e defer as chamadas ao
-  client com `setTimeout(..., 0)`. Chama a RPC `is_admin()` para saber se o usuário é administrador.
-- `src/admin/auth/require-admin.tsx` — guarda de rota: carregando → spinner; sem sessão → `/admin/login`;
-  sessão sem autorização → tela "acesso não autorizado" com botão sair.
-- **Primeiro acesso** (feito por você, uma única vez): em `/admin/login`, aba
-  "Criar acesso de administrador", informe o e-mail `hipertrofia.publicidade@gmail.com` e **escolha sua
-  senha** na tela. Com a auto-confirmação de e-mail ativada, o acesso é liberado na hora. A senha não
-  passa por mim, não vai para o código e não fica gravada no projeto. Se preferir, você pode criar a
-  conta antes e eu ajusto a policy — mas `admin_users` já estará com o seu e-mail, então o acesso
-  funciona assim que o cadastro existir.
-- Qualquer outra pessoa que se cadastrar verá "conta sem acesso administrativo" e não lerá nem gravará
-  nada no banco.
+  `getSession()`, guarda `user` **e** `session`, nunca usa callback `async` e defer chamadas ao client
+  com `setTimeout(..., 0)`. Consulta a RPC `is_admin()` para saber se o usuário autenticado é
+  administrador. A sessão do Supabase Auth é a única coisa persistida pelo próprio cliente de auth;
+  **autorização nunca** é guardada em `localStorage`/`sessionStorage`.
+- `src/admin/auth/require-admin.tsx` — guarda de rota: carregando → spinner; sem sessão →
+  `/admin/login`; sessão sem autorização → tela "acesso não autorizado" com botão sair.
+- **Autorização real fica no banco**: mesmo forjando o estado do frontend, um usuário fora de
+  `admin_users` não consegue ler produto/orçamento nem gravar nada, porque as policies exigem
+  `is_admin()` (que compara o e-mail do JWT com `admin_users`).
+- Adicionar outro administrador no futuro = inserir o e-mail na tabela `admin_users`.
 
 ---
 
@@ -401,7 +410,7 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
 ## Checklist de implementação
 
 - [ ] `supabase_enable` executado e cliente/tipos gerados disponíveis em `src/integrations/supabase/`.
-- [ ] `supabase_configure_auth` com auto-confirmação de e-mail para o login do painel.
+- [ ] `supabase_configure_auth` com `disable_signup: true` (nenhum cadastro público de usuário).
 - [ ] Migration cria `categories`, `brands`, `products`, `quotes`, `quote_items`, `admin_users` com FKs,
       `CHECK` de status, colunas geradas (`effective_price`, `discount_percent`, `margin_percent`), `is_demo`,
       trigger de `updated_at` e índices.
@@ -429,8 +438,10 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
       WhatsApp → confirmar → limpar carrinho.
 - [ ] `src/admin/auth/*` registra `onAuthStateChange` antes de `getSession()`, guarda sessão e usuário,
       defer chamadas ao client e bloqueia `/admin*` para não administradores.
-- [ ] `/admin/login` com entrar e criar acesso (e-mail + senha) e mensagem clara de "sem acesso
-      administrativo" para e-mail fora de `admin_users`; nenhuma senha é registrada no código.
+- [ ] `/admin/login` contém apenas e-mail, senha e o botão Entrar — nenhuma aba, botão ou link de
+      cadastro, e nenhuma senha registrada no código.
+- [ ] `src/admin/auth/*` nunca grava autorização em `localStorage`/`sessionStorage`; o cliente de auth
+      persiste apenas a sessão do Supabase.
 - [ ] `/admin` com os 5 indicadores do dashboard e os orçamentos recentes.
 - [ ] `/admin/produtos` com tabela (custo, margem, estoque, ativo, destaque) e formulário de criar/editar
       com upload de imagem.
@@ -465,8 +476,10 @@ Alterados: `src/router.tsx`, `src/App.tsx`, `src/pages/Index.tsx`, `src/pages/No
 - [ ] `/produto/slug-inexistente` mostra estado de não encontrado, não tela em branco.
 - [ ] `/admin` sem sessão redireciona para `/admin/login`; usuário autenticado fora de `admin_users` vê
       "acesso não autorizado" e não consegue ler produto, orçamento ou gravar nada.
-- [ ] Login com `hipertrofia.publicidade@gmail.com` acessa o dashboard; um segundo e-mail cadastrado
-      não obtém permissão nenhuma.
+- [ ] Login com `hipertrofia.publicidade@gmail.com` acessa o dashboard; credenciais fora de
+      `admin_users` não obtêm permissão nenhuma.
+- [ ] Tentativa de cadastro pela aplicação falha (cadastro público desativado) — nenhuma tela oferece
+      signup e o endpoint de signup rejeita a criação de conta.
 - [ ] Administrador logado cria, edita, ativa/desativa, altera preço, promoção, custo, estoque, categoria,
       marca, destaque e specs, e a alteração aparece no catálogo público.
 - [ ] Upload de imagem no admin gera URL pública em `product-images` e a imagem aparece no card e na
