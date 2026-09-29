@@ -19,9 +19,17 @@ Decisões confirmadas com o usuário:
 1. Ao enviar o orçamento, **salvar `quotes` + `quote_items`** no banco e depois abrir o WhatsApp.
 2. Catálogo carrega **direto do banco**.
 3. Imagens: placeholders neutros.
-4. Dados de contato: os valores reais serão informados depois; por ora ficam
-   **placeholders claramente marcados** centralizados em um único arquivo (`src/config/store.ts`).
-   Trocar o número/Instagram/endereço = editar **apenas esse arquivo**.
+4. Dados de contato reais já fornecidos, centralizados em `src/config/store.ts`:
+
+   | Campo | Valor |
+   |---|---|
+   | WhatsApp (número) | `5519993419516` |
+   | WhatsApp (exibição) | `(19) 99341-9516` |
+   | Instagram | `@hipertrofia_oficial` |
+   | Localização | São João da Boa Vista - SP |
+   | Horário de atendimento | 10:00 às 18:30 |
+
+   Trocar qualquer um desses dados no futuro = editar **apenas esse arquivo**.
 
 ---
 
@@ -109,8 +117,10 @@ toast cairia em claro) e position `top-center`.
 ### Configuração e utilitários (novos)
 
 - `src/config/store.ts` — **fonte única** de configuração:
-  `WHATSAPP_NUMBER`, `WHATSAPP_DISPLAY`, `INSTAGRAM_HANDLE`, `ADDRESS_*`, `OPENING_HOURS`,
-  nome da marca, e-mail/links. Valores placeholder com comentário `// TROCAR AQUI`.
+  `WHATSAPP_NUMBER = "5519993419516"`, `WHATSAPP_DISPLAY = "(19) 99341-9516"`,
+  `INSTAGRAM_HANDLE = "hipertrofia_oficial"`, `CITY = "São João da Boa Vista"`,
+  `STATE = "SP"`, `OPENING_HOURS = "10:00 às 18:30"`, nome da marca e URLs.
+  Toda mensagem/link é montado a partir daqui.
 - `src/config/navigation.ts` — links do header/footer + mapa `slug → ícone lucide`
   das categorias (o banco não tem coluna de ícone).
 - `src/lib/format.ts` — `formatCurrency` (BRL), `formatDiscount`, `formatPhone`, `onlyDigits`.
@@ -232,8 +242,9 @@ catch-all `*` (que já existe) mantido por último.
       catálogo ativo e policy de insert para `quotes`/`quote_items`.
 - [ ] `supabase_get_table_schema` confirma RLS habilitada e policies listadas nas 5 tabelas.
 - [ ] Seed via `supabase_insert`: 10 categorias, 6 marcas, 13 produtos (5 com `sale_price`, 8 `featured`).
-- [ ] `src/config/store.ts` existe com WhatsApp, Instagram, endereço e horário em um único
-      lugar, com comentário indicando o que trocar.
+- [ ] `src/config/store.ts` existe com WhatsApp `5519993419516` / `(19) 99341-9516`,
+      Instagram `hipertrofia_oficial`, localização São João da Boa Vista - SP e horário
+      10:00 às 18:30 em um único lugar, e nenhuma outra parte do código repete esses valores.
 - [ ] `src/index.css` e `tailwind.config.ts` com os tokens preto/grafite/vermelho, fontes,
       gradientes, sombras e animações.
 - [ ] `src/components/ui/button.tsx` com variantes `brand`/`whatsapp` e tamanhos de toque;
@@ -270,7 +281,9 @@ catch-all `*` (que já existe) mantido por último.
 - [ ] Filtro por categoria + marca + ordenação por menor preço respeita a ordem de
       `effective_price` (promoção considerada).
 - [ ] Link gerado do WhatsApp contém nome, itens, quantidades, preço unitário e total, e abre
-      em `wa.me` com o número de `src/config/store.ts`.
+      em `wa.me/5519993419516` (lido de `src/config/store.ts`).
+- [ ] Rodapé e área de contato exibem `(19) 99341-9516`, `@hipertrofia_oficial`,
+      São João da Boa Vista - SP e "10:00 às 18:30", todos vindos de `src/config/store.ts`.
 - [ ] Envio com nome/WhatsApp vazios é bloqueado com mensagem de validação.
 - [ ] `/orcamento/finalizar` com o orçamento vazio redireciona para o catálogo em vez de
       enviar mensagem sem itens.
