@@ -764,3 +764,24 @@ Ação combinada: você vai **reconectar a conexão GitHub** concedendo acesso a
 Assim que você avisar, a primeira ação continua sendo **apenas leitura**: `GITHUB_GET_A_REPOSITORY` e
 `GITHUB_GET_REPOSITORY_CONTENT` na raiz. Só depois de as duas responderem com sucesso é que os lotes
 de arquivos começam.
+
+## Quarta verificação + isolamento da causa
+
+| Leitura | Resultado |
+|---|---|
+| `GITHUB_GET_A_REPOSITORY` → `jhowesp/hipertrofia-catalogo` | 404 |
+| `GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER` | lista vazia |
+| `GITHUB_GET_REPOSITORY_CONTENT` na raiz de `jhowesp/hipertrofia-catalogo` | 404 |
+| `GITHUB_GET_REPOSITORY_CONTENT` na raiz de um repositório **público** (`octocat/Hello-World`) | **sucesso** — listou o README |
+
+Isso fecha o diagnóstico: a credencial da integração **funciona** (lê conteúdo de repositório público),
+mas a instalação **não tem nenhum repositório concedido** — por isso listar os repositórios da conta
+vem vazio e o repositório privado responde 404. Somado ao 403 ao criar repositório, o quadro é de uma
+instalação sem permissões de repositório: nem leitura, nem escrita, nem criação.
+
+Consequência prática: nenhuma releitura vai mudar enquanto a autorização não for refeita. Não é nome,
+não é dono, não é o repositório estar privado — é a conexão não ter acesso concedido.
+
+Correção (na conexão do workspace): reconectar a integração GitHub concedendo acesso aos repositórios
+(todos, ou com `hipertrofia-catalogo` marcado) e a permissão **Contents: read and write**. Depois
+disso, a verificação de leitura passa a responder na primeira tentativa e o envio pode começar.
