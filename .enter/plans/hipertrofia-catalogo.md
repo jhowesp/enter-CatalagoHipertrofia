@@ -534,3 +534,95 @@ Para isso a conta de administrador precisa existir com o e-mail `hipertrofia.pub
 Como o cadastro público está desativado, há dois caminhos: criar a conta pelo mecanismo
 administrativo do Enter Cloud, ou eu ativar o cadastro por um instante para você criar a conta com
 sua senha e desativar em seguida.
+
+---
+
+# Tarefa atual: conta de administrador + exportação para o GitHub
+
+## Contexto
+
+Duas necessidades, nenhuma delas alterando o app:
+
+1. **Conta de autenticação do administrador.** A tabela `admin_users` já tem o e-mail
+   `hipertrofia.publicidade@gmail.com`, mas ainda **não existe usuário de autenticação** (a lista de
+   usuários está vazia), então não há como entrar em `/admin`. O cadastro público está desativado
+   (`disable_signup: true`) e deve continuar assim.
+2. **Exportar o projeto para o GitHub** na conta `jhowesp`, usando a conexão de workspace
+   "GitHub de Jhow Esperança" que já existe, **sem alterar nenhum arquivo do projeto**.
+
+## Parte A — Criar o primeiro usuário administrador
+
+Caminho escolhido: **você cria pelo painel do Enter Cloud** (em Autenticação → Usuários). Não existe
+ferramenta do meu lado para criar usuário de autenticação, e a senha não deve passar por mim.
+
+Procedimento:
+
+1. Em **Autenticação → Usuários**, crie um usuário com exatamente
+   `hipertrofia.publicidade@gmail.com` e a senha que você quiser.
+2. Marque o usuário como **confirmado** (auto-confirmação de e-mail já está ligada no projeto; se o
+   painel pedir, confirme manualmente). Sem isso o login é recusado.
+3. **Não** reative o cadastro público: ele permanece desativado, e isso não muda nada para o seu acesso.
+4. Entre em `/admin/login` com esse e-mail e a senha definida. O painel autoriza pelo e-mail estar em
+   `admin_users` (verificado no banco por `is_admin()`, não no navegador).
+
+O que **não** precisa ser feito: nada de cadastro pela aplicação, nada de alterar código, nada de
+mexer nas políticas de RLS — a autorização já está pronta e testada.
+
+Verificação: contagem de usuários de autenticação maior que zero e login chegando em `/admin`
+(dashboard). Se o login responder "Esta conta não tem acesso ao painel", o e-mail cadastrado está
+diferente do que está em `admin_users`.
+
+Observação: enquanto o usuário não existir, os fluxos autenticados do painel (cadastrar/editar
+produto, CSV, status de orçamento) continuam **não verificados** — a autorização e as negações para
+anônimos já foram testadas, mas o CRUD autenticado só pode ser testado depois deste passo.
+
+## Parte B — Exportar para o GitHub
+
+Caminho: **connector GitHub no chat** (não é o App Runtime). O catálogo já aponta a conexão do
+workspace (`GitHub de Jhow Esperança`, conta `jhowesp`) com `state: selection_required`. Selecionar a
+conexão para este chat libera as operações do GitHub para eu executar a exportação aqui, sem criar
+backend function nem tocar em arquivo do projeto — é justamente o que evita a alteração que você pediu
+para não fazer.
+
+Sequência:
+
+1. `request_connector_access({ kind: "chat_connector", connector_id: "plg_daam7o162a4pv4q7h5e0" })`
+   para selecionar a conexão existente para este chat.
+2. Inspecionar as operações disponíveis (`search_operations` + `get_operation`) antes de gravar:
+   criação de repositório, criação/atualização de arquivo e envio em lote. Se alguma operação
+   necessária estiver desabilitada, eu informo e paro em vez de improvisar outro caminho.
+3. Criar o repositório **`hipertrofia-catalogo`**, **privado**, na conta `jhowesp`.
+4. Enviar os arquivos do projeto, preservando os caminhos: `src/**`, `public/**`, `supabase/**`,
+   `index.html`, `package.json`, `pnpm-lock.yaml`, `tailwind.config.ts`, `postcss.config.js`,
+   `tsconfig*.json`, `eslint.config.js`, `components.json`, `.gitignore`, `.npmrc`,
+   `.env.example`, `i18n.config.json`, `README.md`, `CodeGuideline.md`.
+   - `src/integrations/supabase/client.ts` **entra** (é a chave pública que já vai embutida no site).
+   - Ficam fora: `node_modules/`, `dist/` e `.enter/` (metadados internos de trabalho).
+   - Envio em lotes por tamanho, não por quantidade: `src/integrations/supabase/types.ts` (136 KB) e
+     `pnpm-lock.yaml` (204 KB) vão sozinhos ou com poucos arquivos; o restante em lotes maiores.
+     Binários (`public/favicon.ico`) em base64.
+   - Nada é reescrito no projeto: o conteúdo vem dos arquivos já versionados, sem edição.
+5. Conferir o resultado: listar a raiz do repositório e reabrir 2–3 arquivos (um `.tsx` de página, o
+   `index.html` e o `package.json`) comparando com os originais, e confirmar a contagem de arquivos
+   enviados.
+
+Riscos e limites conhecidos:
+- Se o repositório já existir na conta, eu paro e pergunto antes de escrever nele.
+- Se houver limite de tamanho por chamada, eu reduzo o lote; o envio é retomável, arquivo a arquivo.
+- O repositório é privado, então o conteúdo (inclusive o e-mail dentro de `.enter/`, que fica fora)
+  não fica exposto.
+- A exportação é um retrato único: depois de novas alterações no projeto, uma nova sincronização
+  precisa ser pedida novamente.
+
+## Checklist da tarefa
+
+- [ ] Usuário `hipertrofia.publicidade@gmail.com` criado e confirmado em Autenticação → Usuários.
+- [ ] Cadastro público continua desativado (nenhuma mudança em `supabase_configure_auth`).
+- [ ] Login em `/admin/login` abre o dashboard do painel.
+- [ ] Conexão GitHub (`plg_daam7o162a4pv4q7h5e0`) selecionada para este chat.
+- [ ] Operações de repositório e de gravação de arquivo inspecionadas antes do envio.
+- [ ] Repositório `hipertrofia-catalogo` criado como privado na conta `jhowesp`.
+- [ ] Arquivos enviados preservando os caminhos, sem `node_modules/`, `dist/` ou `.enter/`.
+- [ ] Nenhum arquivo do projeto foi alterado durante a exportação.
+- [ ] Raiz do repositório conferida e 3 arquivos comparados com os originais.
+- [ ] Contagem de arquivos enviados confere com o conjunto exportado.
