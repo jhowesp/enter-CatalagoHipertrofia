@@ -688,3 +688,34 @@ arquivo compactado). O conjunto a enviar é de ~151 arquivos (todos os versionad
 - Os dois arquivos pesados vão sozinhos na chamada: `pnpm-lock.yaml` (204 KB) e
   `src/integrations/supabase/types.ts` (136 KB).
 - Nada é editado, recriado, refatorado ou removido: o conteúdo sai exatamente dos arquivos atuais.
+
+## Decisão adotada
+
+Como as perguntas foram canceladas, vale o que você já determinou na mensagem:
+**projeto completo, sem omitir arquivo algum**, em vários lotes, excluindo apenas `node_modules/`,
+`dist/` e `.enter/`. Nada é editado, recriado, refatorado ou removido.
+
+## Ordem de execução (quando o acesso for liberado)
+
+1. Reconfirmar o acesso com `GITHUB_GET_A_REPOSITORY` (`owner: jhowesp`, `repo: hipertrofia-catalogo`).
+   Se ainda vier 404, **paro** e reporto: não escrevo em repositório que não consigo ler.
+2. Ler a branch padrão do repositório e usá-la como alvo do commit.
+3. Enviar os lotes com `GITHUB_COMMIT_MULTIPLE_FILES`, começando pela raiz e terminando em
+   `supabase/**`, cada lote com uma mensagem de commit descrevendo o conteúdo.
+4. Conferir com `GITHUB_GET_REPOSITORY_CONTENT` (path vazio, lista a raiz) e reabrir 3 arquivos
+   (`src/App.tsx`, `index.html`, `config/store.ts`) comparando com os originais.
+5. Relatar a quantidade de arquivos enviados e a lista por pasta.
+
+## Checklist da exportação
+
+- [ ] Acesso da conexão GitHub ao repositório confirmado por leitura (não por suposição).
+- [ ] Branch padrão do repositório identificada e usada como alvo.
+- [ ] Lote da raiz enviado (configs + README + CodeGuideline).
+- [ ] `src/**` completo enviado preservando os caminhos.
+- [ ] `public/**` enviado (favicon, robots.txt, sitemap.xml, locales, placeholder).
+- [ ] `supabase/**` enviado (config.toml + 3 migrations).
+- [ ] `pnpm-lock.yaml` (204 KB) e `src/integrations/supabase/types.ts` (136 KB) enviados.
+- [ ] Nenhum arquivo do projeto alterado durante o processo.
+- [ ] Raiz do repositório conferida e 3 arquivos comparados com os originais.
+- [ ] Quantidade de arquivos enviados conferida contra a lista dos versionados, menos
+      `node_modules/`, `dist/` e `.enter/`.
