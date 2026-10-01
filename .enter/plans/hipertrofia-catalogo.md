@@ -643,3 +643,48 @@ status ACTIVE, conta do tipo privada. Sessão do conector: `rate`.
 Todos os arquivos saem do conteúdo já versionado, sem edição — nada é alterado no projeto.
 Lotes por tamanho: `src/integrations/supabase/types.ts` (136 KB) e `pnpm-lock.yaml` (204 KB) vão
 sozinhos; o restante em lotes maiores. Fora do repositório: `node_modules/`, `dist/` e `.enter/`.
+
+---
+
+# Bloqueio atual da exportação (verificado em 2026-10-01)
+
+## Evidências coletadas (conexão "GitHub de Jhow Esperança", conta `jhowesp`)
+
+| Verificação | Resultado |
+|---|---|
+| `GITHUB_GET_THE_AUTHENTICATED_USER` | OK — `jhowesp`, id 284968012 |
+| `GITHUB_CREATE_A_REPOSITORY_FOR_THE_AUTHENTICATED_USER` | **403** — "Resource not accessible by integration" |
+| `GITHUB_GET_A_REPOSITORY` em `jhowesp/hipertrofia-catalogo` | **404** (inclusive depois de você criar o repositório) |
+| `GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER` | **lista vazia**, mesmo com o repositório existindo |
+| `GITHUB_FIND_REPOSITORIES` com `user:jhowesp` | **422** — sem permissão para ver os repositórios do usuário |
+
+## Diagnóstico
+
+A instalação da integração GitHub **não tem acesso concedido aos repositórios** dessa conta:
+ela não cria repositório, não enxerga o repositório recém-criado e não lista nada. Sem isso, não há
+como enviar arquivo algum — e não existe caminho legítimo de contorno (nada de token pessoal,
+script próprio ou CLI).
+
+## O que precisa ser feito (do seu lado, na conexão do workspace)
+
+1. Conceder à integração GitHub acesso ao repositório `hipertrofia-catalogo` — ou passar a permitir
+   **todos os repositórios** da conta, que é o mais simples.
+2. Garantir a permissão de escrita de conteúdo (**Contents: read and write**).
+3. Me avisar quando terminar. Eu **reconfiro** com `GITHUB_GET_A_REPOSITORY` antes de escrever —
+   sua confirmação sozinha não é prova de acesso, e eu não escrevo em repositório que não consigo ler.
+
+## Envio depois da liberação (estratégia de lotes)
+
+A integração grava arquivos com o conteúdo embutido na própria chamada (não existe envio em lote por
+arquivo compactado). O conjunto a enviar é de ~151 arquivos (todos os versionados, menos
+`node_modules/`, `dist/` e `.enter/`), cerca de 1,2 MB de texto. Por isso o envio é feito em lotes:
+
+- Lote 1 — raiz: `package.json`, `pnpm-lock.yaml`, `index.html`, `tailwind.config.ts`,
+  `postcss.config.js`, `tsconfig*.json`, `eslint.config.js`, `components.json`, `.gitignore`,
+  `.npmrc`, `.env.example`, `i18n.config.json`, `README.md`, `CodeGuideline.md`.
+- Lotes seguintes — `src/**` (hooks, lib, config, types, services, context, components, pages, admin)
+  preservando exatamente os caminhos atuais.
+- Lotes finais — `public/**`, `supabase/**` (config.toml e as 3 migrations).
+- Os dois arquivos pesados vão sozinhos na chamada: `pnpm-lock.yaml` (204 KB) e
+  `src/integrations/supabase/types.ts` (136 KB).
+- Nada é editado, recriado, refatorado ou removido: o conteúdo sai exatamente dos arquivos atuais.
