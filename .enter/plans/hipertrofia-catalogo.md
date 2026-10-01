@@ -719,3 +719,25 @@ Como as perguntas foram canceladas, vale o que você já determinou na mensagem:
 - [ ] Raiz do repositório conferida e 3 arquivos comparados com os originais.
 - [ ] Quantidade de arquivos enviados conferida contra a lista dos versionados, menos
       `node_modules/`, `dist/` e `.enter/`.
+
+## Segunda verificação de acesso (mesma data)
+
+| Leitura | Resultado |
+|---|---|
+| `GITHUB_GET_A_REPOSITORY` → `jhowesp/hipertrofia-catalogo` | 404 |
+| `GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER` (`type: all`) | lista vazia |
+| `GITHUB_GET_REPOSITORY_CONTENT` na raiz (`path: ""`) | 404 |
+
+Conclusão: a conexão continua **sem acesso** ao repositório. Nenhum arquivo foi enviado e nenhuma
+escrita foi feita. As causas prováveis, em ordem:
+
+1. A integração GitHub está instalada com acesso apenas a repositórios selecionados, e este não foi
+   incluído.
+2. O repositório foi criado em outra conta (a conexão autentica como `jhowesp`, id 284968012) —
+   vale conferir na barra de endereços do navegador se é exatamente
+   `github.com/jhowesp/hipertrofia-catalogo`.
+3. A permissão de conteúdo da integração não inclui leitura/escrita de repositórios privados.
+
+Próximo passo (seu): reconectar/autorizar a conexão GitHub concedendo acesso a esse repositório — ou
+a todos — com permissão de **Contents: read and write**. Depois disso eu re verifico; se ainda vier
+404, continuo parado e reportando, sem escrever nada.
