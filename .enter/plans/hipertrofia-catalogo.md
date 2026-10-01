@@ -741,3 +741,26 @@ escrita foi feita. As causas prováveis, em ordem:
 Próximo passo (seu): reconectar/autorizar a conexão GitHub concedendo acesso a esse repositório — ou
 a todos — com permissão de **Contents: read and write**. Depois disso eu re verifico; se ainda vier
 404, continuo parado e reportando, sem escrever nada.
+
+## Terceira verificação e encaminhamento
+
+Terceira leitura, mesmo resultado: `GITHUB_GET_A_REPOSITORY` 404, lista de repositórios vazia,
+`GITHUB_GET_REPOSITORY_CONTENT` na raiz 404.
+
+Confirmado com você: a URL é exatamente `github.com/jhowesp/hipertrofia-catalogo`. Como dono e nome
+estão corretos, não é erro de identificação — é falta de autorização da integração. A lista de
+repositórios vazia e o 403 na criação mostram que a instalação praticamente não tem permissão de
+repositório, nem de leitura.
+
+Ação combinada: você vai **reconectar a conexão GitHub** concedendo acesso aos repositórios, com
+**Contents: read and write**. Ao reconectar, vale conferir dois pontos:
+
+1. Se a reconexão gerar uma conexão nova, ela pode precisar ser **selecionada para este chat**
+   novamente — nesse caso eu refaço `search_chat_connectors` + `request_connector_access` antes de
+   qualquer escrita.
+2. Se a instalação for do tipo "somente repositórios selecionados", o `hipertrofia-catalogo` precisa
+   estar marcado nessa lista.
+
+Assim que você avisar, a primeira ação continua sendo **apenas leitura**: `GITHUB_GET_A_REPOSITORY` e
+`GITHUB_GET_REPOSITORY_CONTENT` na raiz. Só depois de as duas responderem com sucesso é que os lotes
+de arquivos começam.
