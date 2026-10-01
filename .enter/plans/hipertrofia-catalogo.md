@@ -626,3 +626,20 @@ Riscos e limites conhecidos:
 - [ ] Nenhum arquivo do projeto foi alterado durante a exportação.
 - [ ] Raiz do repositório conferida e 3 arquivos comparados com os originais.
 - [ ] Contagem de arquivos enviados confere com o conjunto exportado.
+
+## Operações GitHub confirmadas (inspeção read-only já feita)
+
+Conexão para este chat: **GitHub de Jhow Esperança**, conta `jhowesp` (usuário id 284968012),
+status ACTIVE, conta do tipo privada. Sessão do conector: `rate`.
+
+| Uso | Operação (tool slug) | Observação |
+|---|---|---|
+| Conferir identidade | `GITHUB_GET_THE_AUTHENTICATED_USER` | antes de escrever |
+| Checar se o repo já existe | `GITHUB_GET_A_REPOSITORY` (owner `jhowesp`, repo `hipertrofia-catalogo`) | 404 = não existe; se existir, paro e pergunto |
+| Criar o repositório | `GITHUB_CREATE_A_REPOSITORY_FOR_THE_AUTHENTICATED_USER` com `name: "hipertrofia-catalogo"`, `private: true` | `auto_init: false` |
+| Enviar os arquivos | `GITHUB_COMMIT_MULTIPLE_FILES` (`owner`, `repo`, `branch: "main"`, `message`, `upserts:[{path, content, encoding}]`) | 1º commit cria a branch `main`; texto em `utf-8`, binário em `base64` |
+| Conferir o resultado | `GITHUB_GET_REPOSITORY_CONTENT` (path `""` lista a raiz) + reabrir 2–3 arquivos | comparação com o original |
+
+Todos os arquivos saem do conteúdo já versionado, sem edição — nada é alterado no projeto.
+Lotes por tamanho: `src/integrations/supabase/types.ts` (136 KB) e `pnpm-lock.yaml` (204 KB) vão
+sozinhos; o restante em lotes maiores. Fora do repositório: `node_modules/`, `dist/` e `.enter/`.
