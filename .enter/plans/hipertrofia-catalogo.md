@@ -785,3 +785,27 @@ não é dono, não é o repositório estar privado — é a conexão não ter ac
 Correção (na conexão do workspace): reconectar a integração GitHub concedendo acesso aos repositórios
 (todos, ou com `hipertrofia-catalogo` marcado) e a permissão **Contents: read and write**. Depois
 disso, a verificação de leitura passa a responder na primeira tentativa e o envio pode começar.
+
+## Quinta verificação (teste de conexão e de transferência)
+
+| Teste | Resultado |
+|---|---|
+| Estado da conexão GitHub no chat (`search_chat_connectors`) | `ready`, 1 conexão — **conectada** |
+| `GITHUB_GET_A_REPOSITORY` → `jhowesp/hipertrofia-catalogo` | 404 |
+| `GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER` | lista vazia |
+| `GITHUB_GET_REPOSITORY_CONTENT` na raiz do repositório | 404 |
+
+Resposta objetiva: **a conexão está ativa, mas a transferência ainda não é possível.** A integração
+não enxerga nenhum repositório da conta `jhowesp`, então não há destino acessível para escrever.
+Nada foi enviado e nenhum arquivo do projeto foi alterado.
+
+Lembrete de permissão do workspace: **apenas owner/admin** pode criar/gerenciar conexões e conceder
+acessos. Se você não for o dono do workspace, quem for precisa ajustar a conexão GitHub.
+
+### Caminho alternativo, se a conexão não puder ser corrigida
+
+Como a limitação é do acesso da integração (e não do conteúdo), dá para entregar o projeto por
+download: gerar um arquivo `.zip` do repositório de trabalho (tudo, exceto `node_modules/`, `dist/` e
+`.enter/`) e te devolver um link para baixar e subir manualmente no GitHub. Continua sem alterar
+nenhum arquivo do projeto — o zip é um artefato novo, fora do código. Nesse caso o commit final no
+GitHub é feito por você, pelo navegador.
