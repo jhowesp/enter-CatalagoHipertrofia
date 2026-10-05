@@ -823,3 +823,58 @@ Perguntas canceladas: nenhum caminho foi escolhido. Situação registrada:
 
 Para retomar basta uma destas duas coisas: (1) avisar que a conexão foi reconectada com acesso aos
 repositórios, ou (2) pedir o `.zip` para subir manualmente.
+
+---
+
+# Tarefa: autorizar novo administrador `jhowfa1@hotmail.com`
+
+## Contexto
+
+Você pediu para adicionar `jhowfa1@hotmail.com` como administrador. Situação verificada agora:
+
+- `admin_users` tem **1 registro**: `hipertrofia.publicidade@gmail.com`.
+- `auth.users` tem **0 usuários**: nenhuma conta de login existe ainda — nem a do primeiro
+  administrador. É por isso que o painel não abre.
+
+## O que eu faço (autorização)
+
+Inserir `jhowfa1@hotmail.com` em `public.admin_users`, mantendo o registro existente. Passam a valer
+**dois** e-mails autorizados: `hipertrofia.publicidade@gmail.com` e `jhowfa1@hotmail.com`.
+É um `INSERT` de uma linha, sem tocar em nenhuma outra tabela, sem alterar políticas e sem mexer no
+catálogo. Nada no app muda: a autorização já está implementada e testada (`is_admin()` + RLS).
+
+SQL previsto (idempotente):
+
+```sql
+insert into public.admin_users (email)
+values ('jhowfa1@hotmail.com')
+on conflict (email) do nothing;
+```
+
+## O que depende de você (conta de login)
+
+A senha **não** passa por mim, não é gravada no projeto e eu não tenho ferramenta para criar usuário
+de autenticação. Em **Autenticação → Usuários** (Enter Cloud), crie a conta com o e-mail que for usar
+como login — `jhowfa1@hotmail.com` e/ou `hipertrofia.publicidade@gmail.com` — escolhendo a senha na
+tela e marcando o usuário como **confirmado**. O cadastro público continua desativado.
+
+**Segurança:** a senha que você escreveu no chat não foi usada nem armazenada por mim em nenhum
+lugar. Como ela trafegou em texto aberto, o recomendável é trocá-la depois de criar a conta.
+
+## Verificação após executar
+
+1. `select email from public.admin_users order by email` → deve retornar os dois e-mails.
+2. `select count(*) from auth.users` → deve ser > 0 depois que você criar a conta.
+3. Login em `/admin/login` com o e-mail cadastrado abre o dashboard.
+4. Um e-mail **fora** da lista, mesmo com conta criada, recebe "acesso não autorizado" — a checagem é
+   no banco (`is_admin()`), não no navegador.
+
+## Checklist
+
+- [ ] `jhowfa1@hotmail.com` inserido em `public.admin_users` (com `on conflict do nothing`).
+- [ ] Registro existente `hipertrofia.publicidade@gmail.com` preservado.
+- [ ] Leitura de `admin_users` confirma exatamente 2 e-mails autorizados.
+- [ ] Conta de login criada por você em Autenticação → Usuários, marcada como confirmada.
+- [ ] Login em `/admin/login` chega ao dashboard.
+- [ ] Senha usada no chat trocada depois da criação da conta.
+- [ ] Nenhuma senha gravada no projeto, no plano ou em qualquer tabela.
