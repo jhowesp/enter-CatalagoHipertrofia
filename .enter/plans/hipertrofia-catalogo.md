@@ -809,3 +809,17 @@ download: gerar um arquivo `.zip` do repositório de trabalho (tudo, exceto `nod
 `.enter/`) e te devolver um link para baixar e subir manualmente no GitHub. Continua sem alterar
 nenhum arquivo do projeto — o zip é um artefato novo, fora do código. Nesse caso o commit final no
 GitHub é feito por você, pelo navegador.
+
+## Estado atual (aguardando definição sua)
+
+Perguntas canceladas: nenhum caminho foi escolhido. Situação registrada:
+
+- Conexão GitHub do chat: ativa, conta `jhowesp`.
+- Acesso ao repositório `jhowesp/hipertrofia-catalogo`: **negado** (404 na leitura, lista vazia,
+  403 na criação). Transferência por essa conexão: indisponível.
+- Alternativa preparada e não executada: gerar `.zip` do projeto (sem `node_modules/`, `dist/`,
+  `.enter/`) e entregar link de download para commit manual no GitHub.
+- Nada foi enviado ao GitHub; nenhum arquivo do projeto foi alterado.
+
+Para retomar basta uma destas duas coisas: (1) avisar que a conexão foi reconectada com acesso aos
+repositórios, ou (2) pedir o `.zip` para subir manualmente.
