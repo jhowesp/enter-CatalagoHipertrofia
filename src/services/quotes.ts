@@ -54,7 +54,11 @@ export async function createQuote(
 ): Promise<CreateQuoteResult> {
   const items = input.items
     .filter((item) => item.quantity > 0)
-    .map((item) => ({ product_id: item.productId, quantity: item.quantity }));
+    .map((item) => ({
+      product_id: item.productId,
+      quantity: item.quantity,
+      flavor: item.flavor ?? null,
+    }));
 
   const { data, error } = await supabase.rpc("create_quote", {
     p_customer_name: input.customerName,

@@ -29,9 +29,9 @@ import {
   sendPendingWindowToWhatsapp,
   whatsappUrl,
 } from "@/lib/whatsapp";
-import { getProductsByIds } from "@/services/catalog";
+import { getProductsByIds, listVariantsByProductIds } from "@/services/catalog";
 import { createQuote } from "@/services/quotes";
-import type { CatalogProduct, QuoteSummaryItem } from "@/types/catalog";
+import type { CatalogProduct, ProductVariant, QuoteSummaryItem } from "@/types/catalog";
 
 const formSchema = z.object({
   customerName: z
@@ -91,10 +91,17 @@ const FinalizarOrcamento = () => {
     // Abrimos a aba antes de qualquer espera: assim o navegador não bloqueia o pop-up.
     const pendingWindow = openPendingWhatsappWindow();
 
-    // 1. Confere os produtos e os preços atuais direto no catálogo (fonte da verdade).
-    let currentProducts: CatalogProduct[];
+    // 1. Confere os produtos, os sabores e os preços atuais direto no catálogo.
+    const productIds = Array.from(new Set(items.map((item) => item.productId)));
+
+    let currentProducts: CatalogProduct[] = [];
+    let currentVariants: ProductVariant[] = [];
+
     try {
-      currentProducts = await getProductsByIds(items.map((item) => item.productId));
+      [currentProducts, currentVariants] = await Promise.all([
+        getProductsByIds(productIds),
+        listVariantsByProductIds(productIds),
+      ]);
     } catch {
       closePendingWindow(pendingWindow);
       setStep("error");
@@ -105,14 +112,28 @@ const FinalizarOrcamento = () => {
     }
 
     const productsById = new Map(currentProducts.map((product) => [product.id, product]));
-    const unavailable = items.filter((item) => !productsById.has(item.productId));
+    const variantsByKey = new Map(
+      currentVariants.map((variant) => [
+        `${variant.productId}::${variant.flavor.toLowerCase()}`,
+        variant,
+      ]),
+    );
+
+    const variantKey = (productId: string, flavor: string | null) =>
+      `${productId}::${(flavor ?? "").toLowerCase()}`;
+
+    const unavailable = items.filter((item) => {
+      if (!productsById.has(item.productId)) return true;
+      if (!item.flavor) return false;
+      return !variantsByKey.has(variantKey(item.productId, item.flavor));
+    });
 
     if (unavailable.length > 0) {
       closePendingWindow(pendingWindow);
       setStep("error");
       setErrorMessage(
-        `Estes produtos saíram do catálogo: ${unavailable
-          .map((item) => item.name)
+        `Estes itens saíram do catálogo: ${unavailable
+          .map((item) => `${item.name}${item.flavor ? ` (${item.flavor})` : ""}`)
           .join(", ")}. Remova do orçamento para continuar.`,
       );
       return;
@@ -120,12 +141,18 @@ const FinalizarOrcamento = () => {
 
     const summaryItems: QuoteSummaryItem[] = items.map((item) => {
       const product = productsById.get(item.productId)!;
+      const variant = item.flavor
+        ? variantsByKey.get(variantKey(item.productId, item.flavor))
+        : undefined;
+      const unitPrice = variant?.price ?? product.effectivePrice;
+
       return {
         productId: product.id,
         name: product.name,
+        flavor: variant?.flavor ?? null,
         quantity: item.quantity,
-        unitPrice: product.effectivePrice,
-        subtotal: item.quantity * product.effectivePrice,
+        unitPrice,
+        subtotal: item.quantity * unitPrice,
       };
     });
 
@@ -137,6 +164,7 @@ const FinalizarOrcamento = () => {
       items: summaryItems.map((item) => ({
         productId: item.productId as string,
         quantity: item.quantity,
+        flavor: item.flavor,
       })),
     });
 
@@ -154,6 +182,7 @@ const FinalizarOrcamento = () => {
       notes: values.notes,
       items: summaryItems.map((item) => ({
         name: item.name,
+        flavor: item.flavor,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
       })),
@@ -224,9 +253,13 @@ const FinalizarOrcamento = () => {
               </h2>
               <ul className="space-y-1 text-sm text-muted-foreground">
                 {confirmed.items.map((item) => (
-                  <li key={item.productId} className="flex justify-between gap-3">
+                  <li
+                    key={`${item.productId}-${item.flavor ?? ""}`}
+                    className="flex justify-between gap-3"
+                  >
                     <span className="truncate">
                       {item.quantity}x {item.name}
+                      {item.flavor ? ` — sabor ${item.flavor}` : ""}
                     </span>
                     <span className="whitespace-nowrap text-foreground">
                       {formatCurrency(item.subtotal)}
@@ -385,10 +418,11 @@ const FinalizarOrcamento = () => {
 
               <ul className="space-y-2 text-sm">
                 {items.map((item) => (
-                  <li key={item.productId} className="flex justify-between gap-3">
+                  <li key={item.key} className="flex justify-between gap-3">
                     <span className="min-w-0 text-muted-foreground">
                       <span className="block truncate text-foreground">{item.name}</span>
                       <span className="text-xs">
+                        {item.flavor ? `Sabor ${item.flavor} • ` : ""}
                         {item.quantity} x {formatCurrency(item.unitPrice)}
                       </span>
                     </span>

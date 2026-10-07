@@ -11,6 +11,22 @@ export type BrandRow = PublicTables["brands"]["Row"];
 export type QuoteRow = PublicTables["quotes"]["Row"];
 export type QuoteItemRow = PublicTables["quote_items"]["Row"];
 export type PublicProductRow = Database["public"]["Views"]["public_products"]["Row"];
+export type PublicProductVariantRow =
+  Database["public"]["Views"]["public_product_variants"]["Row"];
+export type ProductVariantRow = PublicTables["product_variants"]["Row"];
+
+/** Sabor de um produto, com estoque e (opcionalmente) preço próprios. */
+export type ProductVariant = {
+  id: string;
+  productId: string;
+  flavor: string;
+  stock: number;
+  /** Preço efetivo do sabor: próprio, senão herdado do produto. */
+  price: number;
+  /** Preço de tabela, para exibir riscado quando houver promoção. */
+  listPrice: number;
+  position: number;
+};
 
 /** Produto já normalizado para o catálogo público (sem custo, sem margem, sem flags internas). */
 export type CatalogProduct = {
@@ -82,15 +98,18 @@ export type ProductFilters = {
   pageSize?: number;
 };
 
-/** Item enviado para a função de criação do orçamento: só id e quantidade. */
+/** Item enviado para a função de criação do orçamento: id, quantidade e sabor. */
 export type QuoteDraftItem = {
   productId: string;
   quantity: number;
+  /** Sabor escolhido, quando o produto tem variações. */
+  flavor?: string | null;
 };
 
 export type QuoteSummaryItem = {
   productId: string | null;
   name: string;
+  flavor: string | null;
   quantity: number;
   unitPrice: number;
   subtotal: number;

@@ -11,11 +11,15 @@ import {
 import { QUOTE_CART_STORAGE_KEY } from "@/config/store";
 
 export type QuoteCartItem = {
+  /** Chave única do item: produto + sabor. */
+  key: string;
   productId: string;
   name: string;
   slug: string;
   brandName: string | null;
   imageUrl: string | null;
+  /** Sabor escolhido, quando o produto tem variações. */
+  flavor: string | null;
   /** Preço usado no orçamento: promocional quando existir. */
   unitPrice: number;
   /** Preço de tabela, para exibir riscado. */
@@ -23,6 +27,10 @@ export type QuoteCartItem = {
   quantity: number;
   stock: number;
 };
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const buildCartItemKey = (productId: string, flavor: string | null): string =>
+  `${productId}::${(flavor ?? "").trim().toLowerCase()}`;
 
 type QuoteCartContextValue = {
   items: QuoteCartItem[];
@@ -32,37 +40,55 @@ type QuoteCartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (item: Omit<QuoteCartItem, "quantity">, quantity?: number) => void;
-  setQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (item: Omit<QuoteCartItem, "quantity" | "key">, quantity?: number) => void;
+  setQuantity: (key: string, quantity: number) => void;
+  removeItem: (key: string) => void;
   clear: () => void;
 };
 
 const QuoteCartContext = createContext<QuoteCartContextValue | null>(null);
 
-function isCartItem(value: unknown): value is QuoteCartItem {
-  if (!value || typeof value !== "object") return false;
+function normalizeItem(value: unknown): QuoteCartItem | null {
+  if (!value || typeof value !== "object") return null;
+
   const item = value as Record<string, unknown>;
-  return (
-    typeof item.productId === "string" &&
-    typeof item.name === "string" &&
-    typeof item.slug === "string" &&
-    typeof item.unitPrice === "number" &&
-    typeof item.quantity === "number" &&
-    Number.isFinite(item.unitPrice) &&
-    Number.isFinite(item.quantity) &&
-    item.quantity > 0
-  );
+  const productId = typeof item.productId === "string" ? item.productId : null;
+  const unitPrice = typeof item.unitPrice === "number" ? item.unitPrice : null;
+  const quantity = typeof item.quantity === "number" ? item.quantity : null;
+
+  if (!productId || unitPrice === null || quantity === null || quantity <= 0) return null;
+
+  const flavor =
+    typeof item.flavor === "string" && item.flavor.trim() ? item.flavor.trim() : null;
+
+  return {
+    key: buildCartItemKey(productId, flavor),
+    productId,
+    name: typeof item.name === "string" ? item.name : "",
+    slug: typeof item.slug === "string" ? item.slug : "",
+    brandName: typeof item.brandName === "string" ? item.brandName : null,
+    imageUrl: typeof item.imageUrl === "string" ? item.imageUrl : null,
+    flavor,
+    unitPrice,
+    listPrice: typeof item.listPrice === "number" ? item.listPrice : unitPrice,
+    quantity,
+    stock: typeof item.stock === "number" ? item.stock : 0,
+  };
 }
 
 function readStoredCart(): QuoteCartItem[] {
   if (typeof window === "undefined") return [];
+
   try {
     const raw = window.localStorage.getItem(QUOTE_CART_STORAGE_KEY);
     if (!raw) return [];
+
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isCartItem);
+
+    return parsed
+      .map(normalizeItem)
+      .filter((item): item is QuoteCartItem => item !== null);
   } catch {
     return [];
   }
@@ -81,27 +107,29 @@ export function QuoteCartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const addItem = useCallback(
-    (item: Omit<QuoteCartItem, "quantity">, quantity = 1) => {
+    (item: Omit<QuoteCartItem, "quantity" | "key">, quantity = 1) => {
       const safeQuantity = Math.max(1, Math.trunc(quantity));
+      const key = buildCartItemKey(item.productId, item.flavor);
+
       setItems((current) => {
-        const existing = current.find((entry) => entry.productId === item.productId);
+        const existing = current.find((entry) => entry.key === key);
         if (existing) {
           return current.map((entry) =>
-            entry.productId === item.productId
-              ? { ...entry, ...item, quantity: entry.quantity + safeQuantity }
+            entry.key === key
+              ? { ...entry, ...item, key, quantity: entry.quantity + safeQuantity }
               : entry,
           );
         }
-        return [...current, { ...item, quantity: safeQuantity }];
+        return [...current, { ...item, key, quantity: safeQuantity }];
       });
     },
     [],
   );
 
-  const setQuantity = useCallback((productId: string, quantity: number) => {
+  const setQuantity = useCallback((key: string, quantity: number) => {
     setItems((current) =>
       current.flatMap((entry) => {
-        if (entry.productId !== productId) return [entry];
+        if (entry.key !== key) return [entry];
         const next = Math.trunc(quantity);
         if (next <= 0) return [];
         return [{ ...entry, quantity: next }];
@@ -109,8 +137,8 @@ export function QuoteCartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((current) => current.filter((entry) => entry.productId !== productId));
+  const removeItem = useCallback((key: string) => {
+    setItems((current) => current.filter((entry) => entry.key !== key));
   }, []);
 
   const clear = useCallback(() => setItems([]), []);

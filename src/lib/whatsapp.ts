@@ -5,6 +5,8 @@ export type WhatsappQuoteItem = {
   name: string;
   quantity: number;
   unitPrice: number;
+  /** Sabor escolhido, quando o produto tem variações. */
+  flavor?: string | null;
 };
 
 export type WhatsappQuoteInput = {
@@ -42,8 +44,9 @@ export function buildQuoteMessage({
 
   items.forEach((item, index) => {
     const subtotal = item.quantity * item.unitPrice;
+    const flavor = item.flavor?.trim() ? ` — sabor ${item.flavor.trim()}` : "";
     lines.push(
-      `${index + 1}. ${item.name}`,
+      `${index + 1}. ${item.name}${flavor}`,
       `   ${item.quantity} x ${formatCurrency(item.unitPrice)} = ${formatCurrency(subtotal)}`,
     );
   });
@@ -60,6 +63,7 @@ export function buildQuoteMessage({
 export function buildProductMessage(input: {
   name: string;
   brandName?: string | null;
+  flavor?: string | null;
   quantity: number;
   unitPrice: number;
 }): string {
@@ -72,6 +76,7 @@ export function buildProductMessage(input: {
   ];
 
   if (input.brandName) lines.push(`*Marca:* ${input.brandName}`);
+  if (input.flavor) lines.push(`*Sabor:* ${input.flavor}`);
   lines.push(`*Quantidade:* ${input.quantity}`);
   lines.push(`*Valor unitário:* ${formatCurrency(input.unitPrice)}`);
   lines.push(`*Subtotal:* ${formatCurrency(input.quantity * input.unitPrice)}`);

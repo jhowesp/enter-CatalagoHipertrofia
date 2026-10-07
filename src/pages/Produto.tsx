@@ -16,7 +16,7 @@ import { useAddToQuote } from "@/hooks/use-add-to-quote";
 import { useSeo } from "@/hooks/use-seo";
 import { formatCurrency, inventoryLabel } from "@/lib/format";
 import { buildProductMessage, whatsappUrl } from "@/lib/whatsapp";
-import { getProductBySlug, listRelatedProducts } from "@/services/catalog";
+import { getProductBySlug, listProductVariants, listRelatedProducts } from "@/services/catalog";
 import { cn } from "@/lib/utils";
 
 const Produto = () => {
@@ -24,11 +24,18 @@ const Produto = () => {
   const addToQuote = useAddToQuote();
   const [quantity, setQuantity] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
+  const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
     queryFn: () => getProductBySlug(slug),
     enabled: Boolean(slug),
+  });
+
+  const { data: variants = [] } = useQuery({
+    queryKey: ["product-variants", product?.id],
+    queryFn: () => listProductVariants(product!.id),
+    enabled: Boolean(product?.id),
   });
 
   const { data: related = [] } = useQuery({
@@ -40,6 +47,7 @@ const Produto = () => {
   useEffect(() => {
     setQuantity(1);
     setImageIndex(0);
+    setSelectedFlavor(null);
   }, [slug]);
 
   const productJsonLd = useMemo(() => {
@@ -120,9 +128,33 @@ const Produto = () => {
   }
 
   const specs = Object.entries(product.specs);
-  const subtotal = quantity * product.effectivePrice;
   const gallery = product.images;
   const activeImage = gallery[imageIndex] ?? product.imageUrl;
+
+  const hasVariants = variants.length > 0;
+  const selectedVariant = variants.find((variant) => variant.flavor === selectedFlavor) ?? null;
+
+  // Sabor escolhido manda no preço e no estoque; sem sabor, vale o produto.
+  const displayPrice = selectedVariant?.price ?? product.effectivePrice;
+  const displayListPrice = selectedVariant?.listPrice ?? product.price;
+  const displayStock = selectedVariant?.stock ?? product.stock;
+  const displayDiscount =
+    displayListPrice > displayPrice && displayListPrice > 0
+      ? Math.round(((displayListPrice - displayPrice) / displayListPrice) * 100)
+      : 0;
+
+  const priceView = {
+    price: displayListPrice,
+    salePrice: displayDiscount > 0 ? displayPrice : null,
+    effectivePrice: displayPrice,
+    discountPercent: displayDiscount,
+  };
+
+  const subtotal = quantity * displayPrice;
+  /** Com variações, é obrigatório escolher o sabor antes de adicionar. */
+  const needsFlavor = hasVariants && !selectedFlavor;
+
+  const currentFlavor = selectedVariant?.flavor ?? product.flavor;
 
   return (
     <PageShell>
@@ -209,17 +241,55 @@ const Produto = () => {
               )}
             </div>
 
+            {hasVariants && (
+              <div className="space-y-2">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Escolha o sabor
+                </span>
+                <ul className="flex flex-wrap gap-2">
+                  {variants.map((variant) => {
+                    const isSelected = variant.flavor === selectedFlavor;
+                    const soldOut = variant.stock <= 0;
+
+                    return (
+                      <li key={variant.id}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFlavor(variant.flavor)}
+                          aria-pressed={isSelected}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
+                            isSelected
+                              ? "border-primary bg-primary/15 text-foreground"
+                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/60 hover:text-foreground",
+                            soldOut && !isSelected && "opacity-60",
+                          )}
+                        >
+                          {variant.flavor}
+                          {soldOut && (
+                            <span className="text-[10px] uppercase tracking-wide">
+                              sem estoque
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
             <div className="space-y-2 rounded-xl border border-border bg-card p-4 surface-card">
-              <PriceBlock product={product} size="lg" />
-              {product.salePrice !== null && product.discountPercent > 0 && (
+              <PriceBlock product={priceView} size="lg" />
+              {displayDiscount > 0 && (
                 <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                  Economia de {formatCurrency(product.price - product.effectivePrice)} no
-                  preço promocional
+                  Economia de {formatCurrency(displayListPrice - displayPrice)} no preço
+                  promocional
                 </p>
               )}
               <p className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Boxes className="h-4 w-4 text-primary" aria-hidden />
-                {inventoryLabel(product.stock, STORE.lowStockThreshold)}
+                {inventoryLabel(displayStock, STORE.lowStockThreshold)}
               </p>
             </div>
 
@@ -233,7 +303,7 @@ const Produto = () => {
                     value={quantity}
                     onChange={setQuantity}
                     size="lg"
-                    max={Math.max(1, product.stock)}
+                    max={Math.max(1, displayStock)}
                     ariaLabel="Quantidade"
                   />
                 </div>
@@ -251,7 +321,16 @@ const Produto = () => {
                 <Button
                   variant="brand"
                   size="xl"
-                  onClick={() => addToQuote(product, quantity, { openDrawer: true })}
+                  disabled={needsFlavor}
+                  onClick={() =>
+                    addToQuote(product, quantity, {
+                      openDrawer: true,
+                      flavor: selectedVariant?.flavor ?? null,
+                      unitPrice: displayPrice,
+                      listPrice: displayListPrice,
+                      stock: displayStock,
+                    })
+                  }
                 >
                   <ShoppingCart />
                   Adicionar ao orçamento
@@ -262,8 +341,9 @@ const Produto = () => {
                       buildProductMessage({
                         name: product.name,
                         brandName: product.brandName,
+                        flavor: selectedVariant?.flavor ?? product.flavor,
                         quantity,
-                        unitPrice: product.effectivePrice,
+                        unitPrice: displayPrice,
                       }),
                     )}
                     target="_blank"
@@ -275,12 +355,18 @@ const Produto = () => {
                 </Button>
               </div>
 
+              {needsFlavor && (
+                <p className="text-xs font-semibold text-primary">
+                  Escolha um sabor acima para adicionar ao orçamento.
+                </p>
+              )}
+
               <p className="text-[11px] leading-relaxed text-muted-foreground">
                 {QUOTE_NOTICE}
               </p>
             </div>
 
-            {(specs.length > 0 || product.weight || product.flavor) && (
+            {(specs.length > 0 || product.weight || currentFlavor) && (
               <section className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <h2 className="flex items-center gap-2 font-display text-base tracking-tight text-foreground">
                   <Tag className="h-4 w-4 text-primary" aria-hidden />
@@ -302,6 +388,25 @@ const Produto = () => {
                       </dt>
                       <dd className="text-sm text-foreground">{product.categoryName}</dd>
                     </div>
+                  )}
+                  {hasVariants ? (
+                    <div className="rounded-lg bg-secondary/50 px-3 py-2">
+                      <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Sabores
+                      </dt>
+                      <dd className="text-sm text-foreground">
+                        {variants.map((variant) => variant.flavor).join(", ")}
+                      </dd>
+                    </div>
+                  ) : (
+                    currentFlavor && (
+                      <div className="rounded-lg bg-secondary/50 px-3 py-2">
+                        <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          Sabor
+                        </dt>
+                        <dd className="text-sm text-foreground">{currentFlavor}</dd>
+                      </div>
+                    )
                   )}
                   {specs.map(([key, value]) => (
                     <div key={key} className="rounded-lg bg-secondary/50 px-3 py-2">

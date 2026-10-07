@@ -6,7 +6,9 @@ import {
   type CatalogProduct,
   type Category,
   type ProductFilters,
+  type ProductVariant,
   type PublicProductRow,
+  type PublicProductVariantRow,
 } from "@/types/catalog";
 
 const PUBLIC_PRODUCT_COLUMNS =
@@ -183,8 +185,51 @@ export async function listRelatedProducts(
   return (data ?? []).map((row) => mapProduct(row as PublicProductRow));
 }
 
-export async function listCategories(): Promise<Category[]> {
+const VARIANT_COLUMNS = "id,product_id,flavor,stock,price,list_price,position";
+
+function mapVariant(row: PublicProductVariantRow): ProductVariant {
+  return {
+    id: String(row.id ?? ""),
+    productId: String(row.product_id ?? ""),
+    flavor: row.flavor ?? "",
+    stock: Number(row.stock ?? 0),
+    price: Number(row.price ?? 0),
+    listPrice: Number(row.list_price ?? 0),
+    position: Number(row.position ?? 0),
+  };
+}
+
+/** Sabores (variações) de um produto, já com preço resolvido e só os ativos. */
+export async function listProductVariants(
+  productId: string,
+): Promise<ProductVariant[]> {
   const { data, error } = await supabase
+    .from("public_product_variants")
+    .select(VARIANT_COLUMNS)
+    .eq("product_id", productId)
+    .order("position", { ascending: true })
+    .order("flavor", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapVariant(row as PublicProductVariantRow));
+}
+
+/** Sabores de vários produtos de uma vez (usado ao finalizar o orçamento). */
+export async function listVariantsByProductIds(
+  productIds: string[],
+): Promise<ProductVariant[]> {
+  if (productIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("public_product_variants")
+    .select(VARIANT_COLUMNS)
+    .in("product_id", productIds);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapVariant(row as PublicProductVariantRow));
+}
+
+export async function listCategories(): Promise<Category[]> {  const { data, error } = await supabase
     .from("categories")
     .select("id,name,slug,image_url,active")
     .eq("active", true)

@@ -57,7 +57,7 @@ const Orcamento = () => {
             <div className="space-y-3">
               {items.map((item) => (
                 <article
-                  key={item.productId}
+                  key={item.key}
                   className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 surface-card sm:flex-row sm:items-center"
                 >
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-2">
@@ -87,6 +87,9 @@ const Orcamento = () => {
                         {item.name}
                       </Link>
                     </h2>
+                    {item.flavor && (
+                      <p className="text-xs text-muted-foreground">Sabor: {item.flavor}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {formatCurrency(item.unitPrice)} por unidade
                       {item.listPrice > item.unitPrice && (
@@ -100,7 +103,7 @@ const Orcamento = () => {
                   <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
                     <QuantityStepper
                       value={item.quantity}
-                      onChange={(quantity) => setQuantity(item.productId, quantity)}
+                      onChange={(quantity) => setQuantity(item.key, quantity)}
                       min={1}
                       max={Math.max(1, item.stock)}
                       size="sm"
@@ -116,7 +119,7 @@ const Orcamento = () => {
                     variant="ghost"
                     size="icon"
                     className="self-start text-muted-foreground hover:text-destructive sm:self-center"
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.key)}
                     aria-label={`Remover ${item.name}`}
                   >
                     <Trash2 />

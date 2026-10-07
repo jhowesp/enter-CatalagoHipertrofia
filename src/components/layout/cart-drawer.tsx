@@ -58,7 +58,7 @@ export function CartDrawer() {
           <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
             {items.map((item) => (
               <article
-                key={item.productId}
+                key={item.key}
                 className="flex gap-3 rounded-lg border border-border bg-card p-3"
               >
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5">
@@ -90,6 +90,11 @@ export function CartDrawer() {
                       {item.brandName}
                     </span>
                   )}
+                  {item.flavor && (
+                    <span className="text-[11px] text-muted-foreground">
+                      Sabor: {item.flavor}
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {formatCurrency(item.unitPrice)} cada
                   </span>
@@ -99,7 +104,7 @@ export function CartDrawer() {
                       value={item.quantity}
                       min={1}
                       size="sm"
-                      onChange={(quantity) => setQuantity(item.productId, quantity)}
+                      onChange={(quantity) => setQuantity(item.key, quantity)}
                       ariaLabel={`Quantidade de ${item.name}`}
                     />
                     <span className="font-display text-base text-foreground">
@@ -113,7 +118,7 @@ export function CartDrawer() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeItem(item.productId)}
+                  onClick={() => removeItem(item.key)}
                   aria-label={`Remover ${item.name} do orçamento`}
                 >
                   <Trash2 />

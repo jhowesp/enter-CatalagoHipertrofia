@@ -3435,6 +3435,58 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          active: boolean
+          created_at: string
+          flavor: string
+          id: string
+          position: number
+          price: number | null
+          product_id: string
+          sale_price: number | null
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          flavor: string
+          id?: string
+          position?: number
+          price?: number | null
+          product_id: string
+          sale_price?: number | null
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          flavor?: string
+          id?: string
+          position?: number
+          price?: number | null
+          product_id?: string
+          sale_price?: number | null
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
@@ -3533,6 +3585,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          product_flavor: string | null
           product_id: string | null
           product_name: string
           quantity: number
@@ -3543,6 +3596,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          product_flavor?: string | null
           product_id?: string | null
           product_name: string
           quantity: number
@@ -3553,6 +3607,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          product_flavor?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
@@ -3616,6 +3671,31 @@ export type Database = {
       }
     }
     Views: {
+      public_product_variants: {
+        Row: {
+          flavor: string | null
+          id: string | null
+          list_price: number | null
+          position: number | null
+          price: number | null
+          product_id: string | null
+          stock: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_products: {
         Row: {
           brand_id: string | null

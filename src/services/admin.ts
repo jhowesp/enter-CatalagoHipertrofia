@@ -6,6 +6,7 @@ import type {
   ProductInsert,
   ProductRow,
   ProductUpdate,
+  ProductVariantRow,
   QuoteItemRow,
   QuoteRow,
   QuoteWithItems,
@@ -116,6 +117,85 @@ export async function setProductFlag(
 ): Promise<void> {
   const { error } = await supabase.from("products").update(payload).eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sabores (variações do produto)                                      */
+/* ------------------------------------------------------------------ */
+
+export type VariantInput = {
+  flavor: string;
+  /** null = herda o preço do produto. */
+  price: number | null;
+  salePrice: number | null;
+  stock: number;
+  active: boolean;
+};
+
+export async function listAdminVariants(
+  productId: string,
+): Promise<ProductVariantRow[]> {
+  const { data, error } = await supabase
+    .from("product_variants")
+    .select("*")
+    .eq("product_id", productId)
+    .order("position", { ascending: true })
+    .order("flavor", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ProductVariantRow[];
+}
+
+/**
+ * Sincroniza os sabores do produto com a lista informada.
+ * Atualiza/insere por sabor e só depois remove os que saíram — assim uma falha
+ * no meio do caminho não apaga os sabores existentes.
+ */
+export async function saveProductVariants(
+  productId: string,
+  rows: VariantInput[],
+): Promise<void> {
+  const cleaned = rows
+    .map((row, index) => ({ ...row, flavor: row.flavor.trim(), position: index }))
+    .filter((row) => row.flavor.length > 0);
+
+  if (cleaned.length > 0) {
+    const { error: upsertError } = await supabase.from("product_variants").upsert(
+      cleaned.map((row) => ({
+        product_id: productId,
+        flavor: row.flavor,
+        price: row.price,
+        sale_price: row.salePrice,
+        stock: row.stock,
+        active: row.active,
+        position: row.position,
+      })),
+      { onConflict: "product_id,flavor" },
+    );
+
+    if (upsertError) throw new Error(upsertError.message);
+  }
+
+  const { data: existing, error: readError } = await supabase
+    .from("product_variants")
+    .select("id,flavor")
+    .eq("product_id", productId);
+
+  if (readError) throw new Error(readError.message);
+
+  const keep = new Set(cleaned.map((row) => row.flavor));
+  const toDelete = (existing ?? [])
+    .filter((row) => !keep.has(row.flavor))
+    .map((row) => row.id);
+
+  if (toDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("product_variants")
+      .delete()
+      .in("id", toDelete);
+
+    if (deleteError) throw new Error(deleteError.message);
+  }
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,0 +1,211 @@
+create or replace function public.create_quote(
+  p_customer_name text,
+  p_customer_whatsapp text,
+  p_notes text,
+  p_items jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_quote_id uuid;
+  v_total numeric(10,2);
+  v_requested integer;
+  v_resolved integer;
+  v_units integer;
+begin
+  if length(trim(coalesce(p_customer_name, ''))) < 2 or length(trim(p_customer_name)) > 120 then
+    raise exception 'invalid_customer_name';
+  end if;
+
+  if length(regexp_replace(coalesce(p_customer_whatsapp, ''), '\D', '', 'g')) < 10 then
+    raise exception 'invalid_customer_whatsapp';
+  end if;
+
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'empty_quote';
+  end if;
+
+  if jsonb_array_length(p_items) > 100 then
+    raise exception 'too_many_items';
+  end if;
+
+  select count(*) into v_requested
+  from (
+    select (item ->> 'product_id') as product_id,
+           nullif(trim(coalesce(item ->> 'flavor', '')), '') as flavor
+    from jsonb_array_elements(p_items) as item
+    where coalesce(nullif(item ->> 'quantity', '')::integer, 0) > 0
+      and coalesce(item ->> 'product_id', '') <> ''
+    group by 1, 2
+  ) req;
+
+  if v_requested = 0 then
+    raise exception 'empty_quote';
+  end if;
+
+  select count(*), coalesce(sum(r.quantity), 0), coalesce(sum(r.quantity * calc.unit_price), 0)
+    into v_resolved, v_units, v_total
+  from (
+    select (item ->> 'product_id')::uuid as product_id,
+           nullif(trim(coalesce(item ->> 'flavor', '')), '') as flavor,
+           sum(coalesce(nullif(item ->> 'quantity', '')::integer, 0)) as quantity
+    from jsonb_array_elements(p_items) as item
+    where coalesce(nullif(item ->> 'quantity', '')::integer, 0) > 0
+      and coalesce(item ->> 'product_id', '') <> ''
+    group by 1, 2
+  ) r
+  join public.products p on p.id = r.product_id and p.active = true
+  left join public.product_variants v
+    on v.product_id = p.id and v.active = true and v.flavor = r.flavor
+  cross join lateral (
+    select coalesce(v.sale_price, v.price, p.sale_price, p.price) as unit_price
+  ) calc
+  where r.flavor is null or v.id is not null;
+
+  if v_resolved <> v_requested or v_units = 0 then
+    raise exception 'product_unavailable';
+  end if;
+
+  insert into public.quotes (customer_name, customer_whatsapp, notes, total, status)
+  values (
+    trim(p_customer_name),
+    trim(p_customer_whatsapp),
+    nullif(trim(coalesce(p_notes, '')), ''),
+    v_total,
+    'new'
+  )
+  returning id into v_quote_id;
+
+  insert into public.quote_items (quote_id, product_id, product_name, product_flavor, quantity, unit_price, subtotal)
+  select v_quote_id, r.product_id, p.name, r.flavor, r.quantity, calc.unit_price, r.quantity * calc.unit_price
+  from (
+    select (item ->> 'product_id')::uuid as product_id,
+           nullif(trim(coalesce(item ->> 'flavor', '')), '') as flavor,
+           sum(coalesce(nullif(item ->> 'quantity', '')::integer, 0)) as quantity
+    from jsonb_array_elements(p_items) as item
+    where coalesce(nullif(item ->> 'quantity', '')::integer, 0) > 0
+      and coalesce(item ->> 'product_id', '') <> ''
+    group by 1, 2
+  ) r
+  join public.products p on p.id = r.product_id and p.active = true
+  left join public.product_variants v
+    on v.product_id = p.id and v.active = true and v.flavor = r.flavor
+  cross join lateral (
+    select coalesce(v.sale_price, v.price, p.sale_price, p.price) as unit_price
+  ) calc
+  where r.flavor is null or v.id is not null;
+
+  return jsonb_build_object('quote_id', v_quote_id, 'total', v_total, 'units', v_units);
+end;
+$$;
+
+grant execute on function public.create_quote(text, text, text, jsonb) to anon, authenticated;
+
+do $$
+declare
+  v_product uuid;
+  v_product_price numeric(10,2);
+  v_var1 uuid;
+  v_var2 uuid;
+  v_result jsonb;
+  v_quote1 uuid;
+  v_quote2 uuid;
+  v_expected numeric(10,2);
+  v_itens integer;
+  v_flavors integer;
+  v_error text;
+begin
+  select id, effective_price into v_product, v_product_price
+  from public.products where slug = 'whey-protein-concentrado-900g';
+
+  if v_product is null then
+    raise exception 'autoteste: produto base nao encontrado';
+  end if;
+
+  insert into public.product_variants (product_id, flavor, stock, position)
+  values (v_product, 'SABOR AUTOTESTE', 2, 90)
+  returning id into v_var1;
+
+  insert into public.product_variants (product_id, flavor, price, sale_price, stock, position)
+  values (v_product, 'SABOR AUTOTESTE CARO', 199.90, 179.90, 3, 91)
+  returning id into v_var2;
+
+  if (select price from public.public_product_variants where id = v_var1) <> v_product_price then
+    raise exception 'autoteste: sabor sem preco proprio deveria herdar o preco do produto';
+  end if;
+
+  if (select price from public.public_product_variants where id = v_var2) <> 179.90 then
+    raise exception 'autoteste: sabor com preco proprio deveria usar o promocional do sabor';
+  end if;
+
+  v_expected := (2 * v_product_price) + (1 * 179.90);
+
+  select public.create_quote(
+    'TESTE AUTOTESTE',
+    '(19) 99999-9999',
+    'autoteste de sabores',
+    jsonb_build_array(
+      jsonb_build_object('product_id', v_product, 'quantity', 2, 'flavor', 'SABOR AUTOTESTE'),
+      jsonb_build_object('product_id', v_product, 'quantity', 1, 'flavor', 'SABOR AUTOTESTE CARO')
+    )
+  ) into v_result;
+
+  v_quote1 := (v_result ->> 'quote_id')::uuid;
+
+  if (v_result ->> 'total')::numeric <> v_expected then
+    raise exception 'autoteste: total % diferente do esperado %', (v_result ->> 'total'), v_expected;
+  end if;
+
+  select count(*), count(product_flavor) into v_itens, v_flavors
+  from public.quote_items where quote_id = v_quote1;
+
+  if v_itens <> 2 or v_flavors <> 2 then
+    raise exception 'autoteste: esperava 2 itens com sabor gravado (itens %, com sabor %)', v_itens, v_flavors;
+  end if;
+
+  if exists (
+    select 1 from public.quote_items
+    where quote_id = v_quote1 and subtotal <> quantity * unit_price
+  ) then
+    raise exception 'autoteste: subtotal incoerente';
+  end if;
+
+  select public.create_quote(
+    'TESTE AUTOTESTE', '(19) 99999-9999', null,
+    jsonb_build_array(jsonb_build_object('product_id', v_product, 'quantity', 1))
+  ) into v_result;
+
+  v_quote2 := (v_result ->> 'quote_id')::uuid;
+
+  if (v_result ->> 'total')::numeric <> v_product_price then
+    raise exception 'autoteste: item sem sabor deveria usar o preco do produto';
+  end if;
+
+  if (select product_flavor from public.quote_items where quote_id = v_quote2) is not null then
+    raise exception 'autoteste: item sem sabor nao deveria ter sabor gravado';
+  end if;
+
+  v_error := null;
+  begin
+    select public.create_quote(
+      'TESTE AUTOTESTE', '(19) 99999-9999', null,
+      jsonb_build_array(jsonb_build_object('product_id', v_product, 'quantity', 1, 'flavor', 'SABOR QUE NAO EXISTE'))
+    ) into v_result;
+  exception when others then
+    v_error := sqlerrm;
+  end;
+
+  if v_error is null or v_error not like '%product_unavailable%' then
+    raise exception 'autoteste: sabor inexistente nao foi recusado (%)', coalesce(v_error, 'sem erro');
+  end if;
+
+  delete from public.quotes where id in (v_quote1, v_quote2);
+  delete from public.product_variants where id in (v_var1, v_var2);
+
+  if exists (select 1 from public.product_variants where flavor like 'SABOR AUTOTESTE%') then
+    raise exception 'autoteste: sobrou sabor de teste';
+  end if;
+end $$;

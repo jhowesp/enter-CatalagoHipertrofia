@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Save, X } from "lucide-react";
+import { History, Loader2, Plus, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ProductImageGallery } from "@/admin/components/product-image-gallery";
+import {
+  ProductVariantEditor,
+  type VariantDraftRow,
+} from "@/admin/components/product-variant-editor";
+import { clearDraft, draftKeyFor, readDraft, writeDraft } from "@/admin/lib/form-draft";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +29,22 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { STORE } from "@/config/store";
-import { formatCurrency, parseDecimal } from "@/lib/format";
+import { formatCurrency, formatDateTime, parseDecimal } from "@/lib/format";
 import { slugify } from "@/lib/slug";
-import { createProduct, updateProduct } from "@/services/admin";
-import type { BrandRow, CategoryRow, ProductInsert, ProductRow } from "@/types/catalog";
+import {
+  createProduct,
+  listAdminVariants,
+  saveProductVariants,
+  updateProduct,
+  type VariantInput,
+} from "@/services/admin";
+import type {
+  BrandRow,
+  CategoryRow,
+  ProductInsert,
+  ProductRow,
+  ProductVariantRow,
+} from "@/types/catalog";
 
 type SpecRow = { key: string; value: string };
 
@@ -48,6 +66,7 @@ type FormState = {
   featured: boolean;
   active: boolean;
   images: string[];
+  variants: VariantDraftRow[];
 };
 
 const EMPTY_FORM: FormState = {
@@ -68,9 +87,10 @@ const EMPTY_FORM: FormState = {
   featured: false,
   active: true,
   images: [],
+  variants: [],
 };
 
-function formFromProduct(product: ProductRow): FormState {
+function formFromProduct(product: ProductRow, variants: ProductVariantRow[]): FormState {
   const specs =
     product.specs && typeof product.specs === "object" && !Array.isArray(product.specs)
       ? Object.entries(product.specs as Record<string, unknown>).map(([key, value]) => ({
@@ -102,6 +122,13 @@ function formFromProduct(product: ProductRow): FormState {
         : product.image_url
           ? [product.image_url]
           : [],
+    variants: variants.map((variant) => ({
+      flavor: variant.flavor,
+      price: variant.price === null ? "" : String(variant.price),
+      salePrice: variant.sale_price === null ? "" : String(variant.sale_price),
+      stock: String(variant.stock),
+      active: variant.active,
+    })),
   };
 }
 
@@ -125,12 +152,74 @@ export function ProductFormSheet({
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
+  const draftKey = draftKeyFor(product?.id ?? null);
+
+  /** Ao abrir: recupera o rascunho salvo; se não houver, carrega do banco. */
   useEffect(() => {
     if (!open) return;
+
+    let active = true;
     setErrors({});
-    setForm(product ? formFromProduct(product) : EMPTY_FORM);
-  }, [open, product]);
+
+    const draft = readDraft<FormState>(draftKey);
+
+    if (draft?.value) {
+      setForm({ ...EMPTY_FORM, ...draft.value });
+      setRestoredAt(draft.savedAt);
+      return () => {
+        active = false;
+      };
+    }
+
+    setRestoredAt(null);
+
+    if (!product) {
+      setForm(EMPTY_FORM);
+      return () => {
+        active = false;
+      };
+    }
+
+    void listAdminVariants(product.id)
+      .then((variants) => {
+        if (active) setForm(formFromProduct(product, variants));
+      })
+      .catch(() => {
+        if (active) setForm(formFromProduct(product, []));
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [open, product, draftKey]);
+
+  /**
+   * Salva o rascunho continuamente. É o que evita perder o cadastro ao trocar de
+   * aba (o preview recarrega e o estado do React se perde).
+   */
+  useEffect(() => {
+    if (!open) return;
+
+    const timer = window.setTimeout(() => writeDraft(draftKey, form), 600);
+    return () => window.clearTimeout(timer);
+  }, [open, form, draftKey]);
+
+  const discardDraft = () => {
+    clearDraft(draftKey);
+    setRestoredAt(null);
+    setErrors({});
+
+    if (!product) {
+      setForm(EMPTY_FORM);
+      return;
+    }
+
+    void listAdminVariants(product.id)
+      .then((variants) => setForm(formFromProduct(product, variants)))
+      .catch(() => setForm(formFromProduct(product, [])));
+  };
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -190,6 +279,51 @@ export function ProductFormSheet({
       nextErrors.stock = "Estoque deve ser um número inteiro igual ou maior que zero.";
     }
 
+    const variantInputs: VariantInput[] = [];
+    const seenFlavors = new Set<string>();
+
+    form.variants.forEach((row, index) => {
+      const flavor = row.flavor.trim();
+      const variantPrice = row.price.trim() ? parseDecimal(row.price) : null;
+      const variantSale = row.salePrice.trim() ? parseDecimal(row.salePrice) : null;
+      const variantStock = Number(row.stock.trim() === "" ? "0" : row.stock.trim());
+
+      if (!flavor) {
+        nextErrors[`variant-${index}`] = `Sabor do item ${index + 1} está em branco.`;
+        return;
+      }
+      if (seenFlavors.has(flavor.toLowerCase())) {
+        nextErrors[`variant-${index}`] = `O sabor "${flavor}" está repetido na lista.`;
+        return;
+      }
+      if (variantPrice !== null && variantPrice <= 0) {
+        nextErrors[`variant-${index}`] = `Preço próprio do sabor "${flavor}" deve ser maior que zero.`;
+        return;
+      }
+      if (
+        variantSale !== null &&
+        (variantSale <= 0 || (variantPrice !== null && variantSale >= variantPrice))
+      ) {
+        nextErrors[`variant-${index}`] =
+          `Promocional do sabor "${flavor}" deve ser maior que zero e menor que o preço próprio.`;
+        return;
+      }
+      if (!Number.isInteger(variantStock) || variantStock < 0) {
+        nextErrors[`variant-${index}`] =
+          `Estoque do sabor "${flavor}" deve ser um número inteiro maior ou igual a zero.`;
+        return;
+      }
+
+      seenFlavors.add(flavor.toLowerCase());
+      variantInputs.push({
+        flavor,
+        price: variantPrice,
+        salePrice: variantSale,
+        stock: variantStock,
+        active: row.active,
+      });
+    });
+
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return null;
 
@@ -201,57 +335,65 @@ export function ProductFormSheet({
     }, {});
 
     return {
-      name,
-      slug,
-      brand_id: form.brandId || null,
-      category_id: form.categoryId || null,
-      description: form.description.trim() || null,
-      short_description: form.shortDescription.trim() || null,
-      specs,
-      weight: form.weight.trim() || null,
-      flavor: form.flavor.trim() || null,
-      price: price as number,
-      sale_price: salePrice,
-      cost_price: costPrice,
-      image_url: form.images[0] ?? null,
-      images: form.images,
-      stock,
-      featured: form.featured,
-      active: form.active,
-      is_demo: false,
+      payload: {
+        name,
+        slug,
+        brand_id: form.brandId || null,
+        category_id: form.categoryId || null,
+        description: form.description.trim() || null,
+        short_description: form.shortDescription.trim() || null,
+        specs,
+        weight: form.weight.trim() || null,
+        flavor: form.flavor.trim() || null,
+        price: price as number,
+        sale_price: salePrice,
+        cost_price: costPrice,
+        image_url: form.images[0] ?? null,
+        images: form.images,
+        stock,
+        featured: form.featured,
+        active: form.active,
+        is_demo: false,
+      } satisfies ProductInsert,
+      variants: variantInputs,
     };
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const payload = validate();
-    if (!payload) {
+    const result = validate();
+    if (!result) {
       toast.error("Confira os campos destacados antes de salvar.");
       return;
     }
 
     setSaving(true);
     try {
-      if (product) {
-        await updateProduct(product.id, payload);
-        toast.success("Produto atualizado.");
-      } else {
-        await createProduct(payload);
-        toast.success("Produto cadastrado.");
-      }
+      const saved = product
+        ? await updateProduct(product.id, result.payload)
+        : await createProduct(result.payload);
+
+      await saveProductVariants(saved.id, result.variants);
+
+      clearDraft(draftKey);
+      toast.success(product ? "Produto atualizado." : "Produto cadastrado.");
       onOpenChange(false);
       onSaved();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao salvar o produto.";
       toast.error(
         message.includes("duplicate")
-          ? "Já existe um produto com este endereço (slug). Ajuste o slug."
+          ? "Já existe um produto com este endereço (slug) ou um sabor repetido."
           : message,
       );
     } finally {
       setSaving(false);
     }
   };
+
+  const variantErrors = Object.entries(errors)
+    .filter(([key]) => key.startsWith("variant-"))
+    .map(([, message]) => message);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -269,6 +411,28 @@ export function ProductFormSheet({
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 px-5 py-5">
+          {restoredAt && (
+            <Alert>
+              <History />
+              <AlertTitle>Rascunho recuperado</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <span className="block">
+                  Restaurei o que você já tinha preenchido (salvo em{" "}
+                  {formatDateTime(restoredAt)}). Pode continuar de onde parou.
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-0 text-xs underline"
+                  onClick={discardDraft}
+                  disabled={saving}
+                >
+                  Descartar rascunho e começar do zero
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="product-name">Nome *</Label>
@@ -458,7 +622,7 @@ export function ProductFormSheet({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="product-flavor">Sabor</Label>
+              <Label htmlFor="product-flavor">Sabor (produto de sabor único)</Label>
               <Input
                 id="product-flavor"
                 value={form.flavor}
@@ -466,6 +630,25 @@ export function ProductFormSheet({
                 placeholder="Baunilha"
                 className="h-11"
               />
+            </div>
+
+            <div className="sm:col-span-2">
+              <ProductVariantEditor
+                rows={form.variants}
+                onChange={(rows) => update("variants", rows)}
+                productPrice={form.price}
+                disabled={saving}
+              />
+
+              {variantErrors.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {variantErrors.map((message) => (
+                    <li key={message} className="text-xs text-destructive">
+                      {message}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="space-y-3 sm:col-span-2">

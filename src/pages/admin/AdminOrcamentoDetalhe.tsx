@@ -136,7 +136,14 @@ const AdminOrcamentoDetalhe = () => {
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-t border-border/60">
-                    <td className="px-4 py-3 text-foreground">{item.product_name}</td>
+                    <td className="px-4 py-3 text-foreground">
+                      {item.product_name}
+                      {item.product_flavor && (
+                        <span className="block text-[11px] text-muted-foreground">
+                          Sabor: {item.product_flavor}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-center text-muted-foreground">
                       {item.quantity}
                     </td>
