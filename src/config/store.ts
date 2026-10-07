@@ -56,6 +56,8 @@ export const QUOTE_STATUS_OPTIONS = (
 
 export const IMAGE_BUCKET = "product-images";
 export const MAX_IMAGE_SIZE_MB = 5;
+/** Quantas fotos um produto pode ter (a primeira é a principal). */
+export const MAX_PRODUCT_IMAGES = 5;
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",

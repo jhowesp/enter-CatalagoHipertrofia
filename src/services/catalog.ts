@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
+  normalizeImages,
   normalizeSpecs,
   type Brand,
   type CatalogProduct,
@@ -9,7 +10,7 @@ import {
 } from "@/types/catalog";
 
 const PUBLIC_PRODUCT_COLUMNS =
-  "id,name,slug,brand_id,brand_name,brand_slug,category_id,category_name,category_slug,description,short_description,specs,weight,flavor,price,sale_price,effective_price,discount_percent,image_url,stock,featured";
+  "id,name,slug,brand_id,brand_name,brand_slug,category_id,category_name,category_slug,description,short_description,specs,weight,flavor,price,sale_price,effective_price,discount_percent,image_url,images,stock,featured";
 
 /**
  * A view pública já vem sem `cost_price`, `margin_percent`, `is_demo` e apenas
@@ -39,6 +40,11 @@ function mapProduct(row: PublicProductRow): CatalogProduct {
     effectivePrice: Number(row.effective_price ?? salePrice ?? price),
     discountPercent: Number(row.discount_percent ?? 0),
     imageUrl: row.image_url ?? null,
+    images: (() => {
+      const gallery = normalizeImages(row.images);
+      if (gallery.length > 0) return gallery;
+      return row.image_url ? [row.image_url] : [];
+    })(),
     stock: Number(row.stock ?? 0),
     featured: Boolean(row.featured),
   };

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { ImageUploader } from "@/admin/components/image-uploader";
+import { ProductImageGallery } from "@/admin/components/product-image-gallery";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +47,7 @@ type FormState = {
   specs: SpecRow[];
   featured: boolean;
   active: boolean;
-  imageUrl: string | null;
+  images: string[];
 };
 
 const EMPTY_FORM: FormState = {
@@ -67,7 +67,7 @@ const EMPTY_FORM: FormState = {
   specs: [],
   featured: false,
   active: true,
-  imageUrl: null,
+  images: [],
 };
 
 function formFromProduct(product: ProductRow): FormState {
@@ -96,7 +96,12 @@ function formFromProduct(product: ProductRow): FormState {
     specs,
     featured: product.featured,
     active: product.active,
-    imageUrl: product.image_url ?? null,
+    images:
+      product.images && product.images.length > 0
+        ? product.images
+        : product.image_url
+          ? [product.image_url]
+          : [],
   };
 }
 
@@ -208,7 +213,8 @@ export function ProductFormSheet({
       price: price as number,
       sale_price: salePrice,
       cost_price: costPrice,
-      image_url: form.imageUrl,
+      image_url: form.images[0] ?? null,
+      images: form.images,
       stock,
       featured: form.featured,
       active: form.active,
@@ -525,10 +531,10 @@ export function ProductFormSheet({
             </div>
 
             <div className="space-y-3 sm:col-span-2">
-              <Label>Foto do produto</Label>
-              <ImageUploader
-                value={form.imageUrl}
-                onChange={(url) => update("imageUrl", url)}
+              <Label>Fotos do produto</Label>
+              <ProductImageGallery
+                value={form.images}
+                onChange={(urls) => update("images", urls)}
                 disabled={saving}
               />
             </div>

@@ -33,6 +33,8 @@ export type CatalogProduct = {
   effectivePrice: number;
   discountPercent: number;
   imageUrl: string | null;
+  /** Galeria do produto (até 5 fotos). A primeira é a principal. */
+  images: string[];
   stock: number;
   featured: boolean;
 };
@@ -101,6 +103,12 @@ export type QuoteWithItems = {
 };
 
 export type { QuoteStatus };
+
+/** Normaliza a lista de fotos do produto, descartando valores vazios. */
+export function normalizeImages(value: string[] | null | undefined): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
 
 /** Normaliza o jsonb `specs` para um mapa de textos exibíveis. */
 export function normalizeSpecs(value: Json | null | undefined): Record<string, string> {

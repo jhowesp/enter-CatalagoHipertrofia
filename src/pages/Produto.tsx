@@ -17,11 +17,13 @@ import { useSeo } from "@/hooks/use-seo";
 import { formatCurrency, inventoryLabel } from "@/lib/format";
 import { buildProductMessage, whatsappUrl } from "@/lib/whatsapp";
 import { getProductBySlug, listRelatedProducts } from "@/services/catalog";
+import { cn } from "@/lib/utils";
 
 const Produto = () => {
   const { slug = "" } = useParams<{ slug: string }>();
   const addToQuote = useAddToQuote();
   const [quantity, setQuantity] = useState(1);
+  const [imageIndex, setImageIndex] = useState(0);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -37,6 +39,7 @@ const Produto = () => {
 
   useEffect(() => {
     setQuantity(1);
+    setImageIndex(0);
   }, [slug]);
 
   const productJsonLd = useMemo(() => {
@@ -118,6 +121,8 @@ const Produto = () => {
 
   const specs = Object.entries(product.specs);
   const subtotal = quantity * product.effectivePrice;
+  const gallery = product.images;
+  const activeImage = gallery[imageIndex] ?? product.imageUrl;
 
   return (
     <PageShell>
@@ -146,15 +151,46 @@ const Produto = () => {
         </nav>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_12%,hsl(0_0%_16%),hsl(0_0%_6%))] p-6">
-            <div className="aspect-square w-full">
-              <ProductImage src={product.imageUrl} alt={product.name} priority />
+          <div className="space-y-3">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_12%,hsl(0_0%_16%),hsl(0_0%_6%))] p-6">
+              <div className="aspect-square w-full">
+                <ProductImage src={activeImage} alt={product.name} priority />
+              </div>
+              {product.discountPercent > 0 && (
+                <DiscountBadge
+                  percent={product.discountPercent}
+                  className="absolute left-5 top-5"
+                />
+              )}
             </div>
-            {product.discountPercent > 0 && (
-              <DiscountBadge
-                percent={product.discountPercent}
-                className="absolute left-5 top-5"
-              />
+
+            {gallery.length > 1 && (
+              <ul className="grid grid-cols-5 gap-2">
+                {gallery.map((url, index) => (
+                  <li key={url}>
+                    <button
+                      type="button"
+                      onClick={() => setImageIndex(index)}
+                      aria-pressed={index === imageIndex}
+                      aria-label={`Ver foto ${index + 1} de ${gallery.length}`}
+                      className={cn(
+                        "aspect-square w-full overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5 transition-colors",
+                        index === imageIndex
+                          ? "border-primary"
+                          : "border-border hover:border-primary/60",
+                      )}
+                    >
+                      <img
+                        src={url}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-contain"
+                      />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
