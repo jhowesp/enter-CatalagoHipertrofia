@@ -878,3 +878,44 @@ lugar. Como ela trafegou em texto aberto, o recomendável é trocá-la depois de
 - [ ] Login em `/admin/login` chega ao dashboard.
 - [ ] Senha usada no chat trocada depois da criação da conta.
 - [ ] Nenhuma senha gravada no projeto, no plano ou em qualquer tabela.
+
+---
+
+# Acesso administrativo: concluído, agora fechar a janela temporária
+
+## Contexto
+
+Funcionou. Verificado no banco:
+
+- `auth.users`: 1 conta — `hipertrofia.publicidade@gmail.com`, **confirmada**, com senha, último
+  acesso em 07/10/2026 15:25 (ou seja, o login no painel aconteceu).
+- `admin_users`: 2 e-mails autorizados — `hipertrofia.publicidade@gmail.com` e `jhowfa1@hotmail.com`.
+
+A causa raiz do bloqueio anterior ficou identificada e registrada: o provedor de e-mail estava
+desligado (`external_email_enabled: false`), o que derrubava cadastro **e** login por senha. Com ele
+ligado, o cadastro passou.
+
+## O que falta fazer (limpeza combinada)
+
+1. **Fechar o cadastro público de volta**: `supabase_configure_auth` com `disable_signup: true`
+   (mantendo `auto_confirm_email: true` e `external_anonymous_users_enabled: false`).
+2. **Remover o formulário temporário** de `src/pages/admin/AdminLogin.tsx`, devolvendo a tela ao
+   formato exigido: somente e-mail, senha e botão Entrar — sem modo de criação de conta, sem
+   `describeAuthError`/`reportAuthError` órfãos.
+3. **Revalidar**: `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build`.
+4. Conferir no endpoint de configuração que `disable_signup` voltou a `true`.
+
+## Verificação
+
+- [ ] `disable_signup: true` confirmado no endpoint de configuração de autenticação.
+- [ ] `external_anonymous_users_enabled: false` mantido.
+- [ ] `/admin/login` mostra apenas e-mail, senha e Entrar (nenhuma opção de criar conta).
+- [ ] A conta existente continua entrando e chega ao dashboard (login não depende da janela aberta).
+- [ ] `pnpm lint`, `tsc --noEmit` e `build` sem erros.
+- [ ] Nenhuma alteração em RLS, tabelas, políticas ou no catálogo público.
+
+## Observação
+
+Com a conta criada, os fluxos autenticados do painel (cadastrar/editar produto, upload de imagem,
+CRUD de categorias e marcas, importação CSV e alteração de status de orçamento) podem finalmente ser
+testados por você no dia a dia — antes eles estavam impossíveis de exercitar.
