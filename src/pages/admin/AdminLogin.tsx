@@ -44,6 +44,15 @@ const describeAuthError = (message: string | undefined): string => {
   return message?.trim() || "Erro inesperado. Me diga o que apareceu aqui e eu verifico.";
 };
 
+/** Mostra a explicação amigável e, entre parênteses, o texto exato do serviço. */
+const reportAuthError = (raw: string | undefined, fallback: string): string => {
+  const detail = (raw ?? "").trim();
+  if (!detail) return fallback;
+
+  const friendly = describeAuthError(detail);
+  return friendly === detail ? friendly : `${friendly} (detalhe técnico: ${detail})`;
+};
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -104,7 +113,7 @@ const AdminLogin = () => {
       });
 
       if (signInError || !data.session) {
-        setError(describeAuthError(signInError?.message));
+        setError(reportAuthError(signInError?.message, "Não foi possível entrar."));
         return;
       }
 
@@ -134,11 +143,10 @@ const AdminLogin = () => {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { emailRedirectTo: `${window.location.origin}/` },
       });
 
       if (signUpError) {
-        setError(describeAuthError(signUpError.message));
+        setError(reportAuthError(signUpError.message, "Não foi possível criar a conta."));
         return;
       }
 
