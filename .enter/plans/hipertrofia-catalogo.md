@@ -919,3 +919,87 @@ ligado, o cadastro passou.
 Com a conta criada, os fluxos autenticados do painel (cadastrar/editar produto, upload de imagem,
 CRUD de categorias e marcas, importação CSV e alteração de status de orçamento) podem finalmente ser
 testados por você no dia a dia — antes eles estavam impossíveis de exercitar.
+
+---
+
+# Nova tarefa: até 5 fotos por produto
+
+## Contexto
+
+Hoje cada produto tem **uma** foto: a coluna `products.image_url` (um texto) com upload único em
+`src/admin/components/image-uploader.tsx`. Você quer até 5 fotos por produto no cadastro do painel.
+A entrega inclui o banco, o formulário do admin e a exibição pública — de nada serve subir 5 fotos se
+o cliente só vê uma.
+
+## Decisões de arquitetura
+
+1. **Onde guardar as fotos.** Uma coluna nova em `products`: `images text[] NOT NULL DEFAULT '{}'`
+   (lista de URLs no Enter Cloud Storage). Um array resolve bem "até 5 fotos sem legenda": fica na
+   própria linha do produto, não exige tabela extra nem junção na view pública, e não cria consulta
+   N+1. Um `CHECK` no banco garante o limite: no máximo 5 itens.
+2. **A foto principal continua sendo `image_url`.** Ao salvar, o app grava `images` e espelha
+   `images[1]` em `image_url`. Assim card do catálogo, carrinho, JSON-LD e SEO continuam funcionando
+   sem nenhuma alteração — e não há duas fontes de verdade na tela.
+3. **Reaproveitar o que já existe.** Mesmo bucket `product-images`, mesmo caminho
+   `products/{uuid}.{ext}`, mesmas funções de `src/services/storage.ts`
+   (`uploadProductImage`, `removeProductImageByUrl`, `validateImageFile`) e o mesmo limite de 5 MB.
+   Nada de infraestrutura nova.
+4. **Sem tabela nova** e sem mexer em RLS: a policy de admin em `products` já cobre a coluna nova.
+
+## Mudanças
+
+### Banco (migration)
+
+- `alter table public.products add column images text[] not null default '{}'`.
+- `CHECK` de limite: `array_length(images, 1) is null or array_length(images, 1) <= 5`.
+- Recriar a view `public_products` acrescentando `images` **no fim** da lista de colunas
+  (`create or replace view` aceita coluna nova no final; o público continua sem `cost_price`,
+  `margin_percent` e `is_demo`).
+- Nada de `DROP`, nada de remover coluna, nada de apagar dado.
+
+### Admin
+
+- Novo componente `src/admin/components/product-image-gallery.tsx`:
+  - botão de envio (aceita também seleção múltipla), no máximo 5 imagens no total;
+  - miniaturas com remover individual e ação "usar como principal" (a principal é a que vai para o card);
+  - aviso quando o limite de 5 é atingido e bloqueio do envio além disso;
+  - remoção também apaga o arquivo do storage (reaproveitando `removeProductImageByUrl`).
+- `src/admin/components/product-form-sheet.tsx`: trocar o `ImageUploader` único pela galeria; salvar
+  `images` e `image_url` (principal) juntos.
+
+### Público
+
+- `src/types/catalog.ts`: `CatalogProduct` ganha `images: string[]`.
+- `src/services/catalog.ts`: incluir `images` na consulta e no mapeamento.
+- `src/pages/Produto.tsx`: imagem principal grande + faixa de miniaturas clicáveis para trocar a
+  exibição (com `loading="lazy"` e proporção preservada, sem distorcer a embalagem).
+- `src/components/catalog/product-card.tsx`: **sem mudança** — continua usando a principal.
+
+### Pendência de segurança que continua aberta
+
+O cadastro público ainda está **liberado** e o formulário temporário "Criar acesso" ainda está em
+`/admin/login`. A conta já existe e o login funciona, então isso deve ser fechado:
+`disable_signup: true` de volta e remoção do modo de cadastro da tela, deixando apenas e-mail, senha e
+Entrar — exatamente o que você pediu no começo.
+
+## Checklist de implementação
+
+- [ ] Migration: coluna `images text[]` em `products` com `CHECK` de no máximo 5.
+- [ ] Migration: view `public_products` recriada expondo `images` no fim da lista.
+- [ ] `CatalogProduct.images` criado em `src/types/catalog.ts` e preenchido em `src/services/catalog.ts`.
+- [ ] `product-image-gallery.tsx` criado com limite de 5, remover, definir principal e limpeza no storage.
+- [ ] `product-form-sheet.tsx` usando a galeria e salvando `images` + `image_url` (principal).
+- [ ] `Produto.tsx` exibindo principal + miniaturas clicáveis.
+- [ ] `disable_signup: true` restaurado e modo de cadastro removido de `AdminLogin.tsx`.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] No painel: enviar 3 fotos em um produto, definir outra como principal e salvar.
+- [ ] O banco mostra `images` com 3 URLs e `image_url` igual à principal escolhida.
+- [ ] A 6ª foto é recusada com aviso de limite (na tela e pelo `CHECK` do banco).
+- [ ] Remover uma foto apaga a linha da lista e o arquivo correspondente do storage.
+- [ ] A página do produto mostra a principal e troca a imagem grande ao clicar nas miniaturas.
+- [ ] O card do catálogo continua exibindo a principal, sem distorção.
+- [ ] Produto sem foto continua exibindo o placeholder neutro.
+- [ ] `/admin/login` volta a ter somente e-mail, senha e Entrar, com `disable_signup: true`.
