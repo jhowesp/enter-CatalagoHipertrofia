@@ -15,6 +15,35 @@ import { supabase } from "@/integrations/supabase/client";
  * administrador (o painel do Enter Cloud não oferece cadastro de usuário).
  * Ele deve ser removido e o cadastro público desativado assim que a conta existir.
  */
+/** Traduz o erro do serviço de autenticação para algo acionável na tela. */
+const describeAuthError = (message: string | undefined): string => {
+  const text = (message ?? "").toLowerCase();
+
+  if (text.includes("already registered") || text.includes("already been registered")) {
+    return "Este e-mail já tem conta criada. Use a opção Entrar com a mesma senha, ou recupere a senha.";
+  }
+  if (text.includes("weak_password") || text.includes("at least 6")) {
+    return "Senha muito curta: o mínimo é 6 caracteres. Recomendo 8 ou mais, misturando letras e números.";
+  }
+  if (text.includes("unable to validate email") || text.includes("invalid format")) {
+    return "E-mail em formato inválido. Confira se digitou corretamente, sem espaços.";
+  }
+  if (text.includes("rate limit") || text.includes("too many")) {
+    return "Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.";
+  }
+  if (text.includes("invalid login credentials")) {
+    return "E-mail ou senha incorretos. Se ainda não criou a conta, use a opção de criar acesso.";
+  }
+  if (text.includes("signups not allowed")) {
+    return "O cadastro está fechado neste momento. Me peça para abrir novamente.";
+  }
+  if (text.includes("email not confirmed")) {
+    return "E-mail ainda não confirmado nesta conta. Me avise que eu confirmo no backend.";
+  }
+
+  return message?.trim() || "Erro inesperado. Me diga o que apareceu aqui e eu verifico.";
+};
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -52,7 +81,8 @@ const AdminLogin = () => {
     if (adminError || isAdmin !== true) {
       await supabase.auth.signOut();
       setError(
-        "Esta conta não tem acesso ao painel. Só e-mails cadastrados como administradores podem entrar.",
+        `A conta ${email.trim()} foi autenticada, mas este e-mail não está na lista de administradores da loja. ` +
+          "Me avise e eu incluo o e-mail correto na lista.",
       );
       return false;
     }
@@ -74,11 +104,7 @@ const AdminLogin = () => {
       });
 
       if (signInError || !data.session) {
-        setError(
-          signInError?.message === "Invalid login credentials"
-            ? "E-mail ou senha incorretos."
-            : (signInError?.message ?? "Não foi possível entrar."),
-        );
+        setError(describeAuthError(signInError?.message));
         return;
       }
 
@@ -112,7 +138,7 @@ const AdminLogin = () => {
       });
 
       if (signUpError) {
-        setError(signUpError.message);
+        setError(describeAuthError(signUpError.message));
         return;
       }
 
@@ -210,7 +236,11 @@ const AdminLogin = () => {
           {error && (
             <Alert variant="destructive">
               <KeyRound />
-              <AlertTitle>Não foi possível continuar</AlertTitle>
+              <AlertTitle>
+                {mode === "login"
+                  ? "Não foi possível entrar"
+                  : "Não foi possível criar a conta"}
+              </AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
