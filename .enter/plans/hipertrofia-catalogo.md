@@ -1182,3 +1182,93 @@ Alterados: `src/router.tsx`, `src/admin/layout/admin-shell.tsx`, `src/pages/Inde
 - [ ] Nenhum arquivo do catálogo, do orçamento ou da autenticação é alterado por esta tarefa.
 - [ ] Limitação declarada: autoplay, arraste, teclado e pausa por hover **não** são comprováveis por
       captura de tela — dependem da sua conferência no navegador.
+
+---
+
+# Repaletização: preto e branco, com vermelho só em botões e destaques
+
+## Contexto
+
+A identidade atual usa vermelho em muitos lugares além do botão: texto de marca, preços em oferta,
+títulos, ícones, bordas, selos, brilhos e gradientes. Você definiu a paleta como **preto e branco**,
+pediu a **logo branca sobre quadrado preto** (na home e no favicon) e que o **vermelho fique apenas em
+botões e destaques**.
+
+Levantamento feito no código: **64 ocorrências de `text-primary`** (vermelho em texto/ícone) e **32 de
+fundo/borda/gradiente/brilho**, em cerca de 35 arquivos. Boa parte dessas marcas não vem de classe
+solta, e sim dos tokens: `--gradient-hero` (com brilhos vermelhos), `--ring` (foco vermelho),
+`--shadow-glow` e `.text-glow`.
+
+## O que continua vermelho (botões e destaques)
+
+- Todos os botões: `Button` (variantes `default` e `brand`), "Adicionar ao orçamento", "Finalizar
+  pelo WhatsApp", "Entrar", "Salvar", e o botão flutuante do WhatsApp.
+- **Selo de desconto** (-16%) nos cards e na página do produto — é o destaque comercial.
+- Cores semânticas de estado: `warning` (estoque baixo) e `destructive` (excluir/erro) permanecem,
+  porque não são a cor de marca.
+
+## O que passa a ser preto/branco
+
+1. **Tokens** (`src/index.css`):
+   - `--gradient-hero`: vira grafite puro, sem os brilhos vermelhos (afeta home, banners sem imagem,
+     faixa de WhatsApp, login do painel, páginas de orçamento e 404).
+   - `--ring`: foco neutro (branco suave) no lugar de vermelho.
+   - `--shadow-glow` e `.text-glow`: sem vermelho (sombra escura neutra).
+   - `--gradient-primary` fica vermelho: é usado só em botões.
+2. **Logo e ícones** (`public/brand/`): `badge-192.png`, `badge-384.png`, `favicon.ico` e
+   `favicon-64.png` refeitos com **silhueta branca sobre fundo preto**; `og.png` refeito em preto e
+   branco (sem a barra vermelha). A silhueta branca sem fundo (`mark-192/640.png`) continua.
+3. **Componente da marca** (`brand-logo.tsx`): container do quadrado preto (sem gradiente vermelho) e
+   o "SUPLEMENTOS" do lockup passa a branco/cinza.
+4. **Textos e ícones** (os 64 usos): nome da marca no card e na página do produto, **preços em
+   oferta** (brancos; o desconto continua sinalizado pelo selo e pelo preço riscado), link
+   "Ver tudo →", títulos com destaque em vermelho no hero e nos banners, selos/pílulas (inclusive
+   "Oferta da semana" e o selo "Principal" da galeria), ícones de confiança, do rodapé, do menu
+   mobile, da lista de filtros e de estado vazio, indicadores, e o `h1` com brilho vermelho.
+5. **Superfícies**: barra de aviso do topo (tingimento vermelho), cartões do card (hover com borda e
+   brilho vermelhos), pílulas de categoria no hover, botões de quantidade/indicadores, o "badge" de
+   demonstração e as faixas de aviso do painel.
+
+## Arquivos principais
+
+- `src/index.css` (tokens) e `public/brand/*` + `public/favicon.ico` (assets).
+- `src/components/brand/brand-logo.tsx`.
+- Site: `src/components/home/{hero,hero-carousel,hero-trust-row,category-grid,section-heading,whatsapp-cta-band}.tsx`,
+  `src/components/banner/banner-slide-content.tsx`,
+  `src/components/catalog/{product-card,price-block,catalog-filters,catalog-toolbar,quantity-stepper,product-grid}.tsx`,
+  `src/components/layout/{site-header,site-footer,cart-drawer,mobile-action-bar}.tsx`,
+  `src/pages/{Index,Catalogo,Produto,Orcamento,FinalizarOrcamento,NotFound}.tsx`.
+- Painel: `src/admin/layout/admin-shell.tsx`,
+  `src/admin/components/{stat-card,demo-data-card,product-image-gallery,product-variant-editor,products-table,quote-status-select,csv-import-sheet}.tsx`,
+  `src/pages/admin/*.tsx`.
+- Intocados: `src/components/ui/*` de formulário que usam a cor de marca só no estado ativo
+  (checkbox, radio, slider, calendar) — decisão: **passam para branco** para manter o monocromático.
+
+## Checklist de implementação
+
+- [ ] `--gradient-hero` sem vermelho e `--ring` neutro em `src/index.css`.
+- [ ] `--shadow-glow` e `.text-glow` sem vermelho.
+- [ ] `badge-192.png`, `badge-384.png`, `favicon.ico` e `favicon-64.png` com silhueta branca sobre
+      preto; `og.png` em preto e branco.
+- [ ] `brand-logo.tsx` com quadrado preto e lockup sem vermelho.
+- [ ] Preços em oferta em branco no card e na página do produto (selo e preço riscado mantidos).
+- [ ] Nome da marca, links "Ver tudo", títulos, selos e pílulas sem vermelho (site e banners).
+- [ ] Ícones de confiança, rodapé, menu mobile, filtros, estados vazios e indicadores em cinza/branco.
+- [ ] Barra de aviso do topo, hovers de card e pílulas de categoria sem tingimento vermelho.
+- [ ] Painel: navegação ativa, cartões de indicador, selo de demonstração, galeria e importação sem
+      vermelho; mantidos `warning` e `destructive`.
+- [ ] Controles de formulário (checkbox, radio, slider, calendar) em branco no estado ativo.
+- [ ] Nenhum botão perde o vermelho; nenhum texto, ícone, borda ou gradiente de marca fica vermelho.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Busca no código não encontra `text-primary` fora de botões, selo de desconto e estados
+      semânticos (`warning`/`destructive`).
+- [ ] Capturas da home em `mobile_390` e `desktop_1280`: logo branca sobre preto, cabeçalho e rodapé
+      monocromáticos, vermelho apenas nos botões e no selo de oferta.
+- [ ] Captura do catálogo: cards com preço branco e selo de desconto vermelho.
+- [ ] Captura da página de produto: seletor de sabor, informações e preços em preto e branco.
+- [ ] Favicon e imagem de compartilhamento conferidos como arquivo (`read_file`) em preto e branco.
+- [ ] Limitação declarada: as telas autenticadas do painel não podem ser capturadas por mim; a
+      conferência visual do painel depende de você.
