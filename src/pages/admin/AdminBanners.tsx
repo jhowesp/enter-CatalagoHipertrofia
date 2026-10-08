@@ -28,6 +28,7 @@ import {
 } from "@/services/banners";
 import { removeBannerImageByUrl } from "@/services/storage";
 import type { Banner } from "@/types/banner";
+import { bannerLabel } from "@/types/banner";
 import { cn } from "@/lib/utils";
 
 const AdminBanners = () => {
@@ -171,7 +172,7 @@ const AdminBanners = () => {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 truncate font-semibold text-foreground">
-                      {banner.title}
+                      {banner.title ?? "Banner só com imagem"}
                       {banner.isDemo && (
                         <Badge variant="secondary" className="text-[10px] uppercase">
                           demonstração
@@ -200,7 +201,7 @@ const AdminBanners = () => {
                       checked={banner.active}
                       disabled={busyId === banner.id}
                       onCheckedChange={(value) => void handleToggleActive(banner, value)}
-                      aria-label={`Banner ${banner.title} ativo`}
+                      aria-label={`Banner ${bannerLabel(banner)} ativo`}
                     />
                     {banner.active ? "Ativo" : "Inativo"}
                   </label>
@@ -211,7 +212,7 @@ const AdminBanners = () => {
                       size="icon"
                       disabled={index === 0 || busyId === banner.id}
                       onClick={() => void handleMove(banner, "up")}
-                      aria-label={`Mover ${banner.title} para cima`}
+                      aria-label={`Mover ${bannerLabel(banner)} para cima`}
                     >
                       {busyId === banner.id ? <Loader2 className="animate-spin" /> : <ArrowUp />}
                     </Button>
@@ -220,7 +221,7 @@ const AdminBanners = () => {
                       size="icon"
                       disabled={index === banners.length - 1 || busyId === banner.id}
                       onClick={() => void handleMove(banner, "down")}
-                      aria-label={`Mover ${banner.title} para baixo`}
+                      aria-label={`Mover ${bannerLabel(banner)} para baixo`}
                     >
                       <ArrowDown />
                     </Button>
@@ -240,7 +241,7 @@ const AdminBanners = () => {
                       size="icon"
                       className="text-muted-foreground hover:border-destructive/60 hover:text-destructive"
                       onClick={() => setToDelete(banner)}
-                      aria-label={`Excluir banner ${banner.title}`}
+                      aria-label={`Excluir banner ${bannerLabel(banner)}`}
                     >
                       <Trash2 />
                     </Button>
@@ -268,7 +269,9 @@ const AdminBanners = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir o banner "{toDelete?.title}"?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Excluir o banner "{toDelete ? bannerLabel(toDelete) : ""}"?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               O banner sai do carrossel da home e a imagem enviada é removida do armazenamento.
               Esta ação não pode ser desfeita.

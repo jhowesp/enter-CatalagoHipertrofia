@@ -3387,7 +3387,7 @@ export type Database = {
           is_demo: boolean
           position: number
           subtitle: string | null
-          title: string
+          title: string | null
           updated_at: string
         }
         Insert: {
@@ -3401,7 +3401,7 @@ export type Database = {
           is_demo?: boolean
           position?: number
           subtitle?: string | null
-          title: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -3415,7 +3415,7 @@ export type Database = {
           is_demo?: boolean
           position?: number
           subtitle?: string | null
-          title?: string
+          title?: string | null
           updated_at?: string
         }
         Relationships: []

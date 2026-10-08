@@ -7,7 +7,8 @@ export type Banner = {
   id: string;
   /** Selo pequeno acima do título (ex.: "Oferta da semana"). */
   eyebrow: string | null;
-  title: string;
+  /** Opcional quando o banner é só imagem. */
+  title: string | null;
   subtitle: string | null;
   imageUrl: string | null;
   ctaLabel: string | null;
@@ -20,7 +21,7 @@ export type Banner = {
 
 export type BannerInput = {
   eyebrow: string | null;
-  title: string;
+  title: string | null;
   subtitle: string | null;
   imageUrl: string | null;
   ctaLabel: string | null;
@@ -32,7 +33,7 @@ export function mapBanner(row: BannerRow): Banner {
   return {
     id: row.id,
     eyebrow: row.eyebrow?.trim() ? row.eyebrow.trim() : null,
-    title: row.title,
+    title: row.title?.trim() ? row.title.trim() : null,
     subtitle: row.subtitle?.trim() ? row.subtitle.trim() : null,
     imageUrl: row.image_url,
     ctaLabel: row.cta_label?.trim() ? row.cta_label.trim() : null,
@@ -41,6 +42,11 @@ export function mapBanner(row: BannerRow): Banner {
     position: row.position,
     isDemo: row.is_demo,
   };
+}
+
+/** Texto usado em rótulos de acessibilidade e listagens quando não há título. */
+export function bannerLabel(banner: Pick<Banner, "title" | "ctaLabel">): string {
+  return banner.title ?? banner.ctaLabel ?? "Banner promocional";
 }
 
 /** Link de destino seguro: interno ou http(s). Qualquer outro esquema é descartado. */

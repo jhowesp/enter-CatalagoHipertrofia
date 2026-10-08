@@ -12,7 +12,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { STORE } from "@/config/store";
-import { isSafeBannerHref, type Banner } from "@/types/banner";
+import { bannerLabel, isSafeBannerHref, type Banner } from "@/types/banner";
 import { cn } from "@/lib/utils";
 
 const AUTOPLAY_MS = 6000;
@@ -52,7 +52,7 @@ function BannerLink({
         href={banner.ctaHref}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={banner.title}
+        aria-label={bannerLabel(banner)}
         className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {children}
@@ -63,7 +63,7 @@ function BannerLink({
   return (
     <Link
       to={banner.ctaHref}
-      aria-label={banner.title}
+      aria-label={bannerLabel(banner)}
       className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {children}
@@ -134,7 +134,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
               key={banner.id}
               className="pl-0"
               aria-roledescription="slide"
-              aria-label={`${index + 1} de ${banners.length}: ${banner.title}`}
+              aria-label={`${index + 1} de ${banners.length}: ${bannerLabel(banner)}`}
             >
               <article
                 className={cn(
@@ -176,7 +176,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
                   key={banner.id}
                   type="button"
                   onClick={() => api?.scrollTo(index)}
-                  aria-label={`Ir para o banner ${index + 1}: ${banner.title}`}
+                  aria-label={`Ir para o banner ${index + 1}: ${bannerLabel(banner)}`}
                   aria-current={index === current}
                   className={cn(
                     "h-2 rounded-full transition-all",

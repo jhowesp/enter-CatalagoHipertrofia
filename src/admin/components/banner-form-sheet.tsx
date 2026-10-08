@@ -47,7 +47,7 @@ const EMPTY_FORM: FormState = {
 function formFromBanner(banner: Banner): FormState {
   return {
     eyebrow: banner.eyebrow ?? "",
-    title: banner.title,
+    title: banner.title ?? "",
     subtitle: banner.subtitle ?? "",
     ctaLabel: banner.ctaLabel ?? "",
     ctaHref: banner.ctaHref ?? "",
@@ -120,7 +120,14 @@ export function BannerFormSheet({
     const nextErrors: Record<string, string> = {};
     const title = form.title.trim();
 
-    if (title.length < 2) nextErrors.title = "Informe o título do banner.";
+    if (title.length > 0 && title.length < 2) {
+      nextErrors.title = "Título muito curto. Deixe em branco para usar só a imagem.";
+    }
+
+    if (title.length === 0 && !form.imageUrl) {
+      nextErrors.title =
+        "O banner precisa de pelo menos um título ou uma imagem. Envie a imagem ou escreva o título.";
+    }
 
     const ctaHref = form.ctaHref.trim();
     if (ctaHref && !isSafeBannerHref(ctaHref)) {
@@ -133,7 +140,7 @@ export function BannerFormSheet({
 
     return {
       eyebrow: form.eyebrow.trim() || null,
-      title,
+      title: title || null,
       subtitle: form.subtitle.trim() || null,
       imageUrl: form.imageUrl,
       ctaLabel: form.ctaLabel.trim() || null,
@@ -170,7 +177,7 @@ export function BannerFormSheet({
 
   const previewData = {
     eyebrow: form.eyebrow.trim() || null,
-    title: form.title.trim() || "Título do banner",
+    title: form.title.trim() || null,
     subtitle: form.subtitle.trim() || null,
     imageUrl: form.imageUrl,
     ctaLabel: form.ctaLabel.trim() || null,
@@ -209,7 +216,7 @@ export function BannerFormSheet({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="banner-title">Título *</Label>
+            <Label htmlFor="banner-title">Título (opcional se houver imagem)</Label>
             <Input
               id="banner-title"
               value={form.title}
@@ -217,6 +224,9 @@ export function BannerFormSheet({
               placeholder="Whey e creatina com desconto"
               className="h-11"
             />
+            <p className="text-[11px] text-muted-foreground">
+              Deixe em branco para o banner aparecer só com a imagem, sem texto por cima.
+            </p>
             {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
           </div>
 

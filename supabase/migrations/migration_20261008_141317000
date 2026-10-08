@@ -1,0 +1,1 @@
+update public.banners set active = true where is_demo = true;

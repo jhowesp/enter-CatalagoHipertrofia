@@ -1,0 +1,12 @@
+alter table public.banners alter column title drop not null;
+
+alter table public.banners drop constraint if exists banners_title_check;
+
+alter table public.banners drop constraint if exists banners_content_check;
+
+alter table public.banners
+  add constraint banners_content_check
+  check (
+    (title is not null and length(trim(title)) >= 2)
+    or image_url is not null
+  );
