@@ -392,11 +392,20 @@ export type DashboardMetrics = {
   newQuotes: number;
   lowStockProducts: number;
   demoProducts: number;
+  demoBanners: number;
 };
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  const [activeProducts, totalProducts, totalQuotes, newQuotes, lowStock, demos, totals] =
-    await Promise.all([
+  const [
+    activeProducts,
+    totalProducts,
+    totalQuotes,
+    newQuotes,
+    lowStock,
+    demos,
+    demoBanners,
+    totals,
+  ] = await Promise.all([
       supabase
         .from("products")
         .select("id", { count: "exact", head: true })
@@ -416,6 +425,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
         .from("products")
         .select("id", { count: "exact", head: true })
         .eq("is_demo", true),
+      supabase.from("banners").select("id", { count: "exact", head: true }).eq("is_demo", true),
       supabase.from("quotes").select("total"),
     ]);
 
@@ -426,6 +436,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     newQuotes.error ??
     lowStock.error ??
     demos.error ??
+    demoBanners.error ??
     totals.error;
 
   if (firstError) throw new Error(firstError.message);
@@ -443,6 +454,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     newQuotes: newQuotes.count ?? 0,
     lowStockProducts: lowStock.count ?? 0,
     demoProducts: demos.count ?? 0,
+    demoBanners: demoBanners.count ?? 0,
   };
 }
 
@@ -459,17 +471,23 @@ export async function listLowStockProducts(limit = 5): Promise<ProductRow[]> {
   return (data ?? []) as ProductRow[];
 }
 
+export type DemoCleanupResult = { products: number; banners: number };
+
 /**
- * Remove apenas os produtos marcados como demonstração (is_demo = true).
+ * Remove apenas o que está marcado como demonstração (produtos e banners da home).
  * O histórico de orçamentos é preservado: `quote_items` guarda o nome do produto.
  */
-export async function deleteDemoProducts(): Promise<number> {
-  const { data, error } = await supabase
-    .from("products")
-    .delete()
-    .eq("is_demo", true)
-    .select("id");
+export async function deleteDemoData(): Promise<DemoCleanupResult> {
+  const [productsResult, bannersResult] = await Promise.all([
+    supabase.from("products").delete().eq("is_demo", true).select("id"),
+    supabase.from("banners").delete().eq("is_demo", true).select("id"),
+  ]);
 
-  if (error) throw new Error(error.message);
-  return (data ?? []).length;
+  if (productsResult.error) throw new Error(productsResult.error.message);
+  if (bannersResult.error) throw new Error(bannersResult.error.message);
+
+  return {
+    products: (productsResult.data ?? []).length,
+    banners: (bannersResult.data ?? []).length,
+  };
 }

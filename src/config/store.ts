@@ -55,9 +55,12 @@ export const QUOTE_STATUS_OPTIONS = (
 ).map((value) => ({ value, label: QUOTE_STATUS_LABELS[value] }));
 
 export const IMAGE_BUCKET = "product-images";
+export const BANNER_BUCKET = "banner-images";
 export const MAX_IMAGE_SIZE_MB = 5;
 /** Quantas fotos um produto pode ter (a primeira é a principal). */
 export const MAX_PRODUCT_IMAGES = 5;
+/** Quantos banners promocionais a home comporta no carrossel. */
+export const MAX_BANNERS = 6;
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",

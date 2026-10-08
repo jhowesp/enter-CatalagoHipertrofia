@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ALLOWED_IMAGE_EXTENSIONS,
   ALLOWED_IMAGE_TYPES,
+  BANNER_BUCKET,
   IMAGE_BUCKET,
   MAX_IMAGE_SIZE_MB,
 } from "@/config/store";
@@ -16,40 +17,71 @@ export function validateImageFile(file: File): string | null {
   return null;
 }
 
-/** Sobe a foto do produto e devolve a URL pública para salvar em `image_url`. */
-export async function uploadProductImage(file: File): Promise<string> {
+/** Sobe uma imagem para o bucket indicado e devolve a URL pública. */
+export async function uploadImageFile({
+  file,
+  bucket,
+  folder,
+}: {
+  file: File;
+  bucket: string;
+  folder: string;
+}): Promise<string> {
   const validationError = validateImageFile(file);
   if (validationError) throw new Error(validationError);
 
   const rawExtension = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const extension = ALLOWED_IMAGE_EXTENSIONS.includes(rawExtension)
-    ? rawExtension
-    : "jpg";
-
-  const path = `products/${crypto.randomUUID()}.${extension}`;
+  const extension = ALLOWED_IMAGE_EXTENSIONS.includes(rawExtension) ? rawExtension : "jpg";
+  const path = `${folder}/${crypto.randomUUID()}.${extension}`;
 
   const { error } = await supabase.storage
-    .from(IMAGE_BUCKET)
+    .from(bucket)
     .upload(path, file, { contentType: file.type, upsert: false });
 
   if (error) throw new Error(error.message);
 
-  const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
 
-function objectPathFromPublicUrl(url: string): string | null {
-  const marker = `/${IMAGE_BUCKET}/`;
+function objectPathFromPublicUrl(url: string, bucket: string): string | null {
+  const marker = `/${bucket}/`;
   const index = url.indexOf(marker);
   if (index < 0) return null;
+
   const path = url.slice(index + marker.length);
   return path ? decodeURIComponent(path) : null;
 }
 
-/** Remove a imagem antiga do storage quando ela é substituída ou descartada. */
-export async function removeProductImageByUrl(url: string | null | undefined) {
+/** Remove um arquivo do bucket a partir da URL pública. */
+export async function removeImageByUrl(
+  url: string | null | undefined,
+  bucket: string,
+): Promise<void> {
   if (!url) return;
-  const path = objectPathFromPublicUrl(url);
-  if (!path || !path.startsWith("products/")) return;
-  await supabase.storage.from(IMAGE_BUCKET).remove([path]);
+
+  const path = objectPathFromPublicUrl(url, bucket);
+  if (!path) return;
+
+  await supabase.storage.from(bucket).remove([path]);
+}
+
+/* Fotos de produto ------------------------------------------------- */
+
+export async function uploadProductImage(file: File): Promise<string> {
+  return uploadImageFile({ file, bucket: IMAGE_BUCKET, folder: "products" });
+}
+
+export async function removeProductImageByUrl(url: string | null | undefined) {
+  await removeImageByUrl(url, IMAGE_BUCKET);
+}
+
+/* Imagens de banner ------------------------------------------------- */
+
+export async function uploadBannerImage(file: File): Promise<string> {
+  return uploadImageFile({ file, bucket: BANNER_BUCKET, folder: "banners" });
+}
+
+export async function removeBannerImageByUrl(url: string | null | undefined) {
+  await removeImageByUrl(url, BANNER_BUCKET);
 }

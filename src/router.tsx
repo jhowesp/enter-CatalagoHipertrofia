@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound";
 import Orcamento from "./pages/Orcamento";
 import Produto from "./pages/Produto";
 import AdminCategorias from "./pages/admin/AdminCategorias";
+import AdminBanners from "./pages/admin/AdminBanners";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminMarcas from "./pages/admin/AdminMarcas";
@@ -63,6 +64,11 @@ export const routers = [
         path: "produtos",
         name: "admin-produtos",
         element: <AdminProdutos />,
+      },
+      {
+        path: "banners",
+        name: "admin-banners",
+        element: <AdminBanners />,
       },
       {
         path: "categorias",

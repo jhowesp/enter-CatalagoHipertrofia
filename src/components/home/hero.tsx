@@ -1,15 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BadgeCheck, Clock, MapPin, MessageCircle, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Clock, MapPin, MessageCircle } from "lucide-react";
 
+import { HeroTrustRow } from "@/components/home/hero-trust-row";
 import { Button } from "@/components/ui/button";
 import { STORE, WHATSAPP_DISPLAY } from "@/config/store";
 import { buildSupportMessage, whatsappUrl } from "@/lib/whatsapp";
-
-const TRUST_ITEMS = [
-  { icon: BadgeCheck, label: "Marcas originais" },
-  { icon: Truck, label: "Retirada na loja" },
-  { icon: ShieldCheck, label: "Orçamento sem compromisso" },
-];
 
 export function Hero() {
   return (
@@ -51,17 +46,7 @@ export function Hero() {
             </Button>
           </div>
 
-          <ul className="flex flex-wrap gap-x-6 gap-y-2 pt-2">
-            {TRUST_ITEMS.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
-              >
-                <item.icon className="h-4 w-4 text-primary" aria-hidden />
-                {item.label}
-              </li>
-            ))}
-          </ul>
+          <HeroTrustRow className="pt-2" />
         </div>
 
         <div className="relative hidden lg:block">

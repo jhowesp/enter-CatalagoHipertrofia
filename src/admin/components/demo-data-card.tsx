@@ -14,27 +14,38 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { deleteDemoProducts } from "@/services/admin";
+import { deleteDemoData } from "@/services/admin";
 
 type DemoDataCardProps = {
-  count: number;
+  productCount: number;
+  bannerCount: number;
   onRemoved: () => void;
 };
 
 /**
- * Dados de demonstração: identificados no banco por `is_demo` e removíveis
- * em um clique antes de entrar o catálogo real.
+ * Dados de demonstração: marcados no banco por `is_demo` (produtos e banners)
+ * e removíveis em um clique antes de entrar o catálogo real.
  */
-export function DemoDataCard({ count, onRemoved }: DemoDataCardProps) {
+export function DemoDataCard({ productCount, bannerCount, onRemoved }: DemoDataCardProps) {
   const [removing, setRemoving] = useState(false);
 
-  if (count <= 0) return null;
+  const total = productCount + bannerCount;
+  if (total <= 0) return null;
+
+  const parts = [
+    productCount > 0
+      ? `${productCount} ${productCount === 1 ? "produto" : "produtos"}`
+      : null,
+    bannerCount > 0 ? `${bannerCount} ${bannerCount === 1 ? "banner" : "banners"}` : null,
+  ].filter(Boolean);
 
   const handleRemove = async () => {
     setRemoving(true);
     try {
-      const removed = await deleteDemoProducts();
-      toast.success(`${removed} produtos de demonstração removidos.`);
+      const result = await deleteDemoData();
+      toast.success(
+        `Removido: ${result.products} produto(s) e ${result.banners} banner(s) de demonstração.`,
+      );
       onRemoved();
     } catch (error) {
       toast.error(
@@ -52,13 +63,13 @@ export function DemoDataCard({ count, onRemoved }: DemoDataCardProps) {
           <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
           <div className="space-y-1">
             <h2 className="font-display text-lg tracking-tight text-foreground">
-              {count} {count === 1 ? "produto de demonstração" : "produtos de demonstração"}
+              {parts.join(" e ")} de demonstração
             </h2>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Estes itens existem só para validar a interface e não são o catálogo
-              definitivo. Você pode removê-los todos de uma vez antes de importar os produtos
-              reais — os orçamentos já enviados são preservados. Produtos que você editar ou
-              importar deixam de ser demonstração.
+              Estes itens existem só para validar a interface e não são o catálogo definitivo.
+              Você pode removê-los todos de uma vez antes de cadastrar os dados reais — os
+              orçamentos já enviados são preservados. Itens que você editar deixam de ser
+              demonstração.
             </p>
           </div>
         </div>
@@ -72,10 +83,10 @@ export function DemoDataCard({ count, onRemoved }: DemoDataCardProps) {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Remover os produtos de demonstração?</AlertDialogTitle>
+              <AlertDialogTitle>Remover os dados de demonstração?</AlertDialogTitle>
               <AlertDialogDescription>
-                Serão excluídos {count} produtos marcados como demonstração. Categorias,
-                marcas e orçamentos não são afetados. Esta ação não pode ser desfeita.
+                Serão excluídos {parts.join(" e ")}. Categorias, marcas e orçamentos não são
+                afetados. Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

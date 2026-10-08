@@ -109,6 +109,8 @@ const AdminProdutos = () => {
     void queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     void queryClient.invalidateQueries({ queryKey: ["admin-metrics"] });
     void queryClient.invalidateQueries({ queryKey: ["admin-low-stock"] });
+    void queryClient.invalidateQueries({ queryKey: ["admin-banners"] });
+    void queryClient.invalidateQueries({ queryKey: ["banners", "active"] });
   };
 
   const resetPaging = () => setPagesLoaded(1);
@@ -176,7 +178,11 @@ const AdminProdutos = () => {
         </div>
       </div>
 
-      <DemoDataCard count={metrics?.demoProducts ?? 0} onRemoved={refreshAll} />
+      <DemoDataCard
+        productCount={metrics?.demoProducts ?? 0}
+        bannerCount={metrics?.demoBanners ?? 0}
+        onRemoved={refreshAll}
+      />
 
       <section className="space-y-4 rounded-xl border border-border bg-card p-4 surface-card">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">

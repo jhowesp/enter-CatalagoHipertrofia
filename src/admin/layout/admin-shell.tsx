@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import {
   ExternalLink,
   FolderTree,
+  Image,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/produtos", label: "Produtos", icon: ShoppingBag, end: false },
+  { to: "/admin/banners", label: "Banners", icon: Image, end: false },
   { to: "/admin/categorias", label: "Categorias", icon: FolderTree, end: false },
   { to: "/admin/marcas", label: "Marcas", icon: Tags, end: false },
   { to: "/admin/orcamentos", label: "Orçamentos", icon: Receipt, end: false },

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CategoryGrid } from "@/components/home/category-grid";
 import { BrandStrip } from "@/components/home/brand-strip";
 import { Hero } from "@/components/home/hero";
+import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ProductRail } from "@/components/home/product-rail";
 import { SectionHeading } from "@/components/home/section-heading";
 import { WhatsappCtaBand } from "@/components/home/whatsapp-cta-band";
@@ -17,6 +18,7 @@ import {
   listFeaturedProducts,
   listOfferProducts,
 } from "@/services/catalog";
+import { listActiveBanners } from "@/services/banners";
 
 const Home = () => {
   const addToQuote = useAddToQuote();
@@ -39,6 +41,12 @@ const Home = () => {
   const { data: brands = [] } = useQuery({
     queryKey: ["brands"],
     queryFn: listBrands,
+  });
+
+  // Carrossel de banners quando houver campanha ativa; senão, o banner fixo da marca.
+  const { data: banners = [] } = useQuery({
+    queryKey: ["banners", "active"],
+    queryFn: listActiveBanners,
   });
 
   const storeJsonLd = useMemo(
@@ -69,7 +77,7 @@ const Home = () => {
 
   return (
     <PageShell>
-      <Hero />
+      {banners.length > 0 ? <HeroCarousel banners={banners} /> : <Hero />}
 
       <div className="container space-y-14 py-12">
         <section>

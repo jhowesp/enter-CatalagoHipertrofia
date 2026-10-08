@@ -51,6 +51,8 @@ const AdminDashboard = () => {
     void queryClient.invalidateQueries({ queryKey: ["admin-metrics"] });
     void queryClient.invalidateQueries({ queryKey: ["admin-low-stock"] });
     void queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    void queryClient.invalidateQueries({ queryKey: ["admin-banners"] });
+    void queryClient.invalidateQueries({ queryKey: ["banners", "active"] });
   };
 
   return (
@@ -110,7 +112,11 @@ const AdminDashboard = () => {
         />
       </div>
 
-      <DemoDataCard count={metrics?.demoProducts ?? 0} onRemoved={refresh} />
+      <DemoDataCard
+        productCount={metrics?.demoProducts ?? 0}
+        bannerCount={metrics?.demoBanners ?? 0}
+        onRemoved={refresh}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5 surface-card">
