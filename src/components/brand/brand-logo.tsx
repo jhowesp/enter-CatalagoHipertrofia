@@ -25,17 +25,21 @@ export function BrandLogo({ className, size = "md", stacked = true }: BrandLogoP
       <span
         aria-hidden
         className={cn(
-          "grid shrink-0 place-items-center overflow-hidden rounded-lg bg-black",
+          "grid shrink-0 place-items-center overflow-hidden rounded-lg bg-black ring-1 ring-border",
           scale.mark,
         )}
       >
+        {/*
+          O fundo do quadrado é definido pelo CSS (bg-black), não pela imagem: assim
+          nenhuma imagem em cache consegue deixar o quadrado com a cor antiga.
+        */}
         <img
-          src="/brand/badge-192.png"
+          src="/brand/v2/mark-192.png"
           alt=""
           width={192}
           height={192}
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain p-[8%]"
         />
       </span>
       <span
