@@ -1062,3 +1062,123 @@ justamente na faixa mais usada em notebook o usuário cai no layout problemátic
 Se "o quadro" que você quer diminuir for o **formulário** de produto (aquele painel lateral grande),
 me diga: ele hoje abre com 672px de largura e vários campos agrupados; dá para reduzir, mas como ele
 tem bastante campo, prefiro confirmar antes de apertar.
+
+---
+
+# Nova tarefa: banners promocionais configuráveis + carrossel interativo na home
+
+## Contexto
+
+Hoje a home tem um banner fixo (`src/components/home/hero.tsx`), sem forma de trocar a campanha sem
+mexer em código. Você pediu (1) uma aba no painel para configurar banners promocionais e (2) um
+banner interativo na home, com acabamento profissional.
+
+Decisões confirmadas:
+- O carrossel **substitui** o banner atual quando existir pelo menos um banner ativo; **sem banner
+  cadastrado, a home continua exatamente como está** (nada quebra).
+- **Sem agendamento**: apenas ativo/inativo.
+
+## Reaproveitamento (nada novo desnecessário)
+
+- `src/components/ui/carousel.tsx` (embla) já vem no projeto — é o motor do carrossel, com arraste no
+  celular, teclado e `CarouselApi`. Não entra dependência nova (o plugin de autoplay não será
+  instalado; o autoplay usa o próprio `api.scrollNext()`).
+- O bucket de imagens e as funções de `src/services/storage.ts` serão generalizados para servir
+  produto e banner, sem duplicar validação de tipo/tamanho.
+- O componente `DemoDataCard` e a limpeza de dados de demonstração passam a cobrir banners também.
+
+## Banco e armazenamento (migration)
+
+Tabela `public.banners`:
+- `id`, `eyebrow text` (selo acima do título), `title text not null` (título obrigatório),
+  `subtitle text`, `image_url text`, `cta_label text`, `cta_href text`, `active boolean default true`,
+  `position integer default 0`, `is_demo boolean default false`, `created_at`, `updated_at`.
+- `CHECK` do título com pelo menos 2 caracteres e **`CHECK` de segurança do link**:
+  `cta_href is null or cta_href ~ '^(/|https?://)'` — impede `javascript:` no destino do botão.
+- Trigger de `updated_at` (reaproveita `public.set_updated_at()` já existente) e índice em
+  `position`.
+- RLS habilitada na criação, com duas políticas: leitura pública apenas de banners ativos e gestão
+  completa só para administrador (`is_admin()`).
+- Sem colunas sensíveis, então não é preciso view pública (diferente de `products`, que esconde custo
+  e margem).
+
+Bucket `banner-images`: público, 5 MB, `image/jpeg, image/png, image/webp, image/avif`, com as
+mesmas quatro políticas já usadas no bucket de produto (leitura pública; escrita só para
+administrador). Objetos em `banners/{uuid}.{ext}`.
+
+Seed: **2 banners demonstrativos** com `is_demo = true` (um de ofertas apontando para
+`/catalogo?ordem=discount` e um institucional com o WhatsApp da loja), para a home já mostrar o
+carrossel e você poder editar/remover.
+
+## Painel (`/admin/banners`)
+
+- Novo item **Banners** no menu do painel (`src/admin/layout/admin-shell.tsx`) e rota em
+  `src/router.tsx`.
+- Lista com: miniatura do banner (mesmo desenho do site), título, destino do botão, **ordem com
+  subir/descer**, chave ativo/inativo, editar e excluir com confirmação.
+- Formulário (sheet): selo, título, subtítulo, imagem (upload com prévia e remover), texto e link do
+  botão, ativo — e uma **prévia ao vivo** do slide exatamente como fica na home.
+- Limite de **6 banners** na tela do painel, com aviso, para o carrossel não virar um slideshow
+  interminável.
+- Validação no app (título, link começando com `/` ou `http`) além do `CHECK` no banco.
+
+## Home (banner interativo)
+
+Novo `src/components/home/hero-carousel.tsx`, usando o carrossel existente:
+- Slide no visual da marca: imagem de fundo com véu escuro + gradiente vermelho, selo, título em
+  Anton, subtítulo e botão de ação (link interno ou externo com `rel="noopener noreferrer"`).
+- **Interações**: avanço automático a cada 6s, **pausado ao passar o mouse, ao focar e quando a aba
+  não está visível**; navegação por setas (desktop) e **arraste** (celular); indicadores clicáveis.
+- **Acessibilidade**: `aria-roledescription="carousel"`, rótulos "1 de N", botões com descrição,
+  indicadores como botões, e **respeito a `prefers-reduced-motion`** (desliga o avanço automático e
+  as transições animadas).
+- **Sem salto de layout**: altura fixa por faixa de tela (mobile/desktop) e imagem do primeiro slide
+  carregada com prioridade, as demais com `loading="lazy"`.
+- **Um único banner ativo** → vira uma faixa estática, sem setas nem indicadores.
+- **Nenhum banner ativo** → renderiza o `Hero` atual, inalterado. A faixa de selos de confiança
+  ("Marcas originais • Retirada na loja • Orçamento sem compromisso") sai para
+  `src/components/home/hero-trust-row.tsx` e passa a ser usada pelos dois.
+
+## Arquivos
+
+Novos: `src/types/banner.ts`, `src/services/banners.ts`,
+`src/admin/components/banner-form-sheet.tsx`, `src/admin/components/banner-preview.tsx`,
+`src/pages/admin/AdminBanners.tsx`, `src/components/home/hero-carousel.tsx`,
+`src/components/home/hero-trust-row.tsx`.
+Alterados: `src/router.tsx`, `src/admin/layout/admin-shell.tsx`, `src/pages/Index.tsx`,
+`src/components/home/hero.tsx`, `src/services/storage.ts`, `src/services/admin.ts`,
+`src/admin/components/demo-data-card.tsx`, `src/config/store.ts`, `src/pages/admin/AdminDashboard.tsx`.
+
+## Checklist de implementação
+
+- [ ] Migration: tabela `banners` com os `CHECK` (título e esquema do link), trigger de `updated_at`
+      e índice de `position`.
+- [ ] RLS habilitada em `banners` com leitura pública só de ativos e gestão por `is_admin()`.
+- [ ] Bucket `banner-images` criado com as quatro políticas (leitura pública, escrita por admin).
+- [ ] Seed de 2 banners demonstrativos com `is_demo = true`.
+- [ ] `src/types/banner.ts` e `src/services/banners.ts` (listar ativos, listar todos, criar, editar,
+      excluir, ativar/desativar, reordenar).
+- [ ] `src/services/storage.ts` generalizado, mantendo as assinaturas atuais de produto intactas e
+      somando as de banner.
+- [ ] Item "Banners" no menu e rota `/admin/banners` protegida pelo `RequireAdmin`.
+- [ ] `AdminBanners.tsx` com lista, reordenação, ativar/desativar e excluir com confirmação.
+- [ ] `banner-form-sheet.tsx` com todos os campos, upload de imagem e prévia ao vivo do slide.
+- [ ] `hero-carousel.tsx` com autoplay, pausa em hover/foco/aba oculta, setas, arraste, indicadores,
+      `prefers-reduced-motion`, altura fixa e imagem prioritária no primeiro slide.
+- [ ] `hero-trust-row.tsx` extraído e usado pelo `Hero` e pelo carrossel.
+- [ ] `Index.tsx` busca os banners ativos e escolhe entre carrossel e `Hero` atual.
+- [ ] Limpeza de demonstração cobrindo banners (produtos + banners) no card e no dashboard.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Leitura no banco confirma RLS habilitada em `banners` com as duas políticas.
+- [ ] Leitura confirma o bucket `banner-images` e suas quatro políticas.
+- [ ] Consulta pública (chave anônima) retorna apenas banners ativos.
+- [ ] `cta_href` com `javascript:` é recusado pelo `CHECK` do banco.
+- [ ] Captura da home em `mobile_390` e `desktop_1280` com o carrossel renderizado no lugar do hero.
+- [ ] Com todos os banners desativados (teste temporário por SQL), a home volta a mostrar o `Hero`
+      atual — e depois reativo os banners demonstrativos.
+- [ ] Nenhum arquivo do catálogo, do orçamento ou da autenticação é alterado por esta tarefa.
+- [ ] Limitação declarada: autoplay, arraste, teclado e pausa por hover **não** são comprováveis por
+      captura de tela — dependem da sua conferência no navegador.
