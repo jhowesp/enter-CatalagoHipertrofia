@@ -1003,3 +1003,62 @@ Entrar — exatamente o que você pediu no começo.
 - [ ] O card do catálogo continua exibindo a principal, sem distorção.
 - [ ] Produto sem foto continua exibindo o placeholder neutro.
 - [ ] `/admin/login` volta a ter somente e-mail, senha e Entrar, com `disable_signup: true`.
+
+---
+
+# Correção: lápis de edição invisível na lista de produtos
+
+## Contexto (causa identificada)
+
+`src/admin/components/products-table.tsx` monta a tabela de desktop com **10 colunas**
+(Produto, Categoria/Marca, Preço, Promoção, Custo, Margem, Estoque, Ativo, Destaque, **Ações**) e o
+contêiner usa `overflow-hidden` (linha 116). O painel ainda reserva 240px para a barra lateral, então
+em telas de 1024–1400px a tabela fica mais larga que a área disponível e as colunas da direita são
+**cortadas** — a última é exatamente a de **Ações**, que contém o lápis de editar. Por isso o botão
+"some" em vez de aparecer.
+
+O layout de cartões (`lg:hidden`, com botão "Editar" textual) só entra abaixo de 1024px, ou seja,
+justamente na faixa mais usada em notebook o usuário cai no layout problemático.
+
+## Mudanças (só em `src/admin/components/products-table.tsx`)
+
+1. **Nunca mais cortar**: trocar `overflow-hidden` por `overflow-x-auto` no contêiner da tabela.
+2. **Coluna de ações sempre visível**: `sticky right-0` com fundo próprio, para o lápis continuar no
+   lugar mesmo se a tabela rolar na horizontal.
+3. **Reduzir o quadro** (o que você pediu): compactar de 10 para 7 colunas, agrupando informação:
+   - **Produto** passa a mostrar categoria e marca embaixo do nome (elimina a coluna
+     "Categoria / Marca");
+   - **Preço** mostra o promocional logo abaixo (elimina a coluna "Promoção");
+   - **Custo / Margem** em uma única coluna, empilhados (elimina a coluna "Margem");
+   - Colunas restantes: Produto, Preço, Custo/Margem, Estoque, Ativo, Destaque, Ações.
+4. **Padding menor** nas células (`px-3 py-2.5` em vez de `px-4 py-3`) e `whitespace-nowrap` nos
+   valores numéricos, para o conjunto caber na largura do conteúdo em 1024px.
+5. **Ações mais visíveis**: botões de Editar e Excluir com borda (`variant="outline"`), ícones um
+   pouco maiores e rótulo "Editar" visível a partir de `xl` — hoje são ícones sem borda, fáceis de
+   passar despercebidos.
+6. O layout de cartões abaixo de `lg` continua igual (já tem botão "Editar" textual).
+
+## Checklist
+
+- [ ] Contêiner da tabela com `overflow-x-auto` no lugar de `overflow-hidden`.
+- [ ] Coluna "Ações" com `sticky right-0` e fundo, mostrando lápis e lixeira.
+- [ ] Tabela reduzida a 7 colunas com categoria/marca, promoção, custo e margem agrupados.
+- [ ] Padding das células reduzido e valores numéricos sem quebra.
+- [ ] Botões de ação com borda e rótulo "Editar" a partir de `xl`.
+- [ ] Cartões abaixo de `lg` inalterados.
+
+## Verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Conferência de largura por cálculo: 7 colunas com padding reduzido cabem na área útil a
+      partir de 1024px (a de ações fixa na borda direita como garantia).
+- [ ] Você recarrega **Produtos** na sua sessão e confirma o lápis visível e o quadro menor.
+      Observação honesta: essa tela exige login e eu não consigo abrir o painel autenticado para
+      capturar imagem — por isso a garantia estrutural (ações fixas + rolagem horizontal) em vez de
+      só ajuste de largura.
+
+## Observação
+
+Se "o quadro" que você quer diminuir for o **formulário** de produto (aquele painel lateral grande),
+me diga: ele hoje abre com 672px de largura e vários campos agrupados; dá para reduzir, mas como ele
+tem bastante campo, prefiro confirmar antes de apertar.
