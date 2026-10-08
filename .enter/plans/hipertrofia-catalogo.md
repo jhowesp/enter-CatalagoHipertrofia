@@ -1272,3 +1272,62 @@ solta, e sim dos tokens: `--gradient-hero` (com brilhos vermelhos), `--ring` (fo
 - [ ] Favicon e imagem de compartilhamento conferidos como arquivo (`read_file`) em preto e branco.
 - [ ] Limitação declarada: as telas autenticadas do painel não podem ser capturadas por mim; a
       conferência visual do painel depende de você.
+
+---
+
+# Correção: quadrado da logo ainda vermelho (cache do navegador)
+
+## Contexto e causa
+
+Você reportou que o quadrado da logo, ao lado de "HIPERTROFIA", continua com fundo vermelho.
+Verificado:
+
+- No **código**: o container do logo já é `bg-black` e a imagem é a versão branca sobre preto.
+- Na **home renderizada agora**: o quadrado aparece preto.
+- No **arquivo**: `public/brand/badge-192.png` é branco sobre preto (conferido).
+
+Ou seja, o que está vermelho é a **cópia antiga da imagem no cache do seu navegador**. Eu substituí o
+conteúdo do arquivo mantendo o **mesmo nome** (`badge-192.png`), então o navegador continua servindo a
+versão que baixou antes — a vermelha. Um ajuste de cache do navegador não se resolve só trocando o
+conteúdo: é preciso trocar a **URL**.
+
+## Correção estrutural (não depende mais de imagem)
+
+1. **Novo caminho com versão** para os ativos de marca: `public/brand/v2/`
+   (`mark-192.png`, `mark-640.png`, `logo-192.png`, `logo-384.png`, `favicon.ico`,
+   `apple-touch-64.png`, `og.png`). URL nova = o navegador é obrigado a baixar de novo.
+2. **O quadrado passa a ser desenhado pelo CSS**, não pela imagem: o container usa `bg-black`
+   (fundo preto garantido pelo CSS, que vem no bundle e é atualizado junto com o código) e dentro
+   dele vai a **silhueta branca com fundo transparente** (`mark-192.png`, 4 KB).
+   Assim o vermelho deixa de existir em qualquer arquivo de imagem — mesmo que uma imagem fique em
+   cache, o quadrado continua preto.
+3. **`index.html`**: ícone da aba, apple-touch-icon e imagem de compartilhamento passam a apontar
+   para `/brand/v2/...`.
+4. **Remover os arquivos antigos** que carregam o vermelho (`public/brand/badge-192.png`,
+   `badge-384.png`, `favicon-64.png`, `favicon.ico` da raiz antiga) para não sobrar versão vermelha
+   em lugar nenhum do projeto.
+
+## Arquivos
+
+- `src/components/brand/brand-logo.tsx` (quadrado por CSS + silhueta transparente, novo caminho).
+- `index.html` (favicon, apple-touch-icon, `og:image`).
+- `public/brand/v2/*` (novos) e remoção dos antigos em `public/brand/` e `public/favicon.ico`.
+
+## Checklist de implementação
+
+- [ ] `public/brand/v2/` criado com todos os ativos monocromáticos.
+- [ ] `brand-logo.tsx` usando `bg-black` (CSS) + `mark-192.png` transparente do novo caminho.
+- [ ] `index.html` apontando favicon, apple-touch e `og:image` para `/brand/v2/`.
+- [ ] Arquivos antigos com a versão vermelha removidos do projeto.
+- [ ] Nenhuma referência remanescente a `/brand/badge-192.png` ou aos antigos.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Busca no código não encontra referência aos caminhos antigos das imagens.
+- [ ] Requisição direta aos novos arquivos responde 200 (URL nova, sem cache).
+- [ ] Captura da home em `mobile_390` e `desktop_1280` com o quadrado preto e a silhueta branca.
+- [ ] `read_file` confirma que `logo-192.png`, `favicon.ico` do novo caminho e `og.png` são preto e
+      branco.
+- [ ] Você recarrega a home (se aparecer algo antigo, um recarregamento forçado resolve) e confirma
+      o quadrado preto.
