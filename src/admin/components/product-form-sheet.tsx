@@ -399,7 +399,7 @@ export function ProductFormSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 overflow-y-auto border-border bg-background p-0 sm:max-w-2xl"
+        className="flex w-full flex-col gap-0 overflow-y-auto border-border bg-background p-0 sm:max-w-xl"
       >
         <SheetHeader className="border-b border-border px-5 py-4 text-left">
           <SheetTitle className="font-display text-xl uppercase tracking-tight">

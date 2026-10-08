@@ -42,28 +42,30 @@ function ProductThumb({ product }: { product: ProductRow }) {
 }
 
 function MarginCell({ product }: { product: ProductRow }) {
-  const margin = product.margin_percent;
   return (
     <span
       className={cn(
         "text-sm font-semibold",
-        margin === null ? "text-muted-foreground" : margin >= 0 ? "text-success" : "text-destructive",
+        product.margin_percent === null
+          ? "text-muted-foreground"
+          : product.margin_percent >= 0
+            ? "text-success"
+            : "text-destructive",
       )}
     >
-      {margin === null ? "—" : `${margin}%`}
+      {product.margin_percent === null ? "—" : `${product.margin_percent}%`}
     </span>
   );
 }
 
 function StockBadge({ product }: { product: ProductRow }) {
   const low = product.stock <= STORE.lowStockThreshold;
+
   return (
     <span
       className={cn(
         "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold",
-        low
-          ? "bg-warning/15 text-warning"
-          : "bg-secondary text-muted-foreground",
+        low ? "bg-warning/15 text-warning" : "bg-secondary text-muted-foreground",
       )}
     >
       {product.stock}
@@ -81,9 +83,9 @@ export function ProductsTable({
   onDelete,
 }: ProductsTableProps) {
   const categoryName = (id: string | null) =>
-    categories.find((category) => category.id === id)?.name ?? "—";
+    categories.find((category) => category.id === id)?.name ?? "Sem categoria";
   const brandName = (id: string | null) =>
-    brands.find((brand) => brand.id === id)?.name ?? "—";
+    brands.find((brand) => brand.id === id)?.name ?? "Sem marca";
 
   if (loading) {
     return (
@@ -113,34 +115,29 @@ export function ProductsTable({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-xl border border-border bg-card lg:block">
-        <table className="w-full text-left text-sm">
+      <div className="hidden overflow-x-auto rounded-xl border border-border bg-card lg:block">
+        <table className="w-full min-w-[680px] text-left text-sm">
           <thead className="border-b border-border bg-secondary/40 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
-              <th className="px-4 py-3">Produto</th>
-              <th className="px-4 py-3">Categoria / Marca</th>
-              <th className="px-4 py-3 text-right">Preço</th>
-              <th className="px-4 py-3 text-right">Promoção</th>
-              <th className="px-4 py-3 text-right">Custo</th>
-              <th className="px-4 py-3 text-right">Margem</th>
-              <th className="px-4 py-3 text-center">Estoque</th>
-              <th className="px-4 py-3 text-center">Ativo</th>
-              <th className="px-4 py-3 text-center">Destaque</th>
-              <th className="px-4 py-3 text-right">Ações</th>
+              <th className="px-3 py-2.5">Produto</th>
+              <th className="px-3 py-2.5 text-right">Preço</th>
+              <th className="px-3 py-2.5 text-right">Custo / Margem</th>
+              <th className="px-3 py-2.5 text-center">Estoque</th>
+              <th className="px-3 py-2.5 text-center">Ativo</th>
+              <th className="px-3 py-2.5 text-center">Destaque</th>
+              <th className="sticky right-0 bg-secondary/40 px-3 py-2.5 text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
             {products.map((product) => (
               <tr key={product.id} className="border-b border-border/60 last:border-0">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-2.5">
                     <ProductThumb product={product} />
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">
-                        {product.name}
-                      </p>
+                      <p className="truncate font-medium text-foreground">{product.name}</p>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        /produto/{product.slug}
+                        {categoryName(product.category_id)} • {brandName(product.brand_id)}
                         {product.is_demo && (
                           <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
                             demonstração
@@ -150,65 +147,67 @@ export function ProductsTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  <p>{categoryName(product.category_id)}</p>
-                  <p className="text-[11px]">{brandName(product.brand_id)}</p>
-                </td>
-                <td className="px-4 py-3 text-right text-foreground">
-                  {formatCurrency(product.price)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {product.sale_price === null ? (
-                    <span className="text-muted-foreground">—</span>
-                  ) : (
-                    <span className="font-semibold text-primary">
-                      {formatCurrency(product.sale_price)}
+
+                <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                  <span className="font-semibold text-foreground">
+                    {formatCurrency(product.effective_price ?? product.price)}
+                  </span>
+                  {product.sale_price !== null && (
+                    <span className="block text-[11px] text-muted-foreground line-through">
+                      {formatCurrency(product.price)}
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right text-muted-foreground">
-                  {product.cost_price === null
-                    ? "—"
-                    : formatCurrency(product.cost_price)}
+
+                <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                  <span className="block text-muted-foreground">
+                    {product.cost_price === null ? "—" : formatCurrency(product.cost_price)}
+                  </span>
+                  <span className="block text-[11px]">
+                    <MarginCell product={product} />
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <MarginCell product={product} />
-                </td>
-                <td className="px-4 py-3 text-center">
+
+                <td className="px-3 py-2.5 text-center">
                   <StockBadge product={product} />
                 </td>
-                <td className="px-4 py-3 text-center">
+
+                <td className="px-3 py-2.5 text-center">
                   <Switch
                     checked={product.active}
                     onCheckedChange={(value) => onToggleFlag(product, "active", value)}
                     aria-label={`Ativar ${product.name}`}
                   />
                 </td>
-                <td className="px-4 py-3 text-center">
+
+                <td className="px-3 py-2.5 text-center">
                   <Switch
                     checked={product.featured}
                     onCheckedChange={(value) => onToggleFlag(product, "featured", value)}
                     aria-label={`Destacar ${product.name}`}
                   />
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-1">
+
+                <td className="sticky right-0 bg-card px-3 py-2.5">
+                  <div className="flex items-center justify-end gap-1.5">
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => onEdit(product)}
                       aria-label={`Editar ${product.name}`}
                     >
                       <Pencil />
+                      <span className="hidden xl:inline">Editar</span>
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-destructive"
+                      variant="outline"
+                      size="sm"
+                      className="text-muted-foreground hover:border-destructive/60 hover:text-destructive"
                       onClick={() => onDelete(product)}
                       aria-label={`Excluir ${product.name}`}
                     >
                       <Trash2 />
+                      <span className="hidden xl:inline">Excluir</span>
                     </Button>
                   </div>
                 </td>
@@ -300,9 +299,9 @@ export function ProductsTable({
                 Editar
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-muted-foreground hover:text-destructive"
+                className="text-muted-foreground hover:border-destructive/60 hover:text-destructive"
                 onClick={() => onDelete(product)}
               >
                 <Trash2 />
