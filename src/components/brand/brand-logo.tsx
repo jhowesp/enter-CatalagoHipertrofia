@@ -13,7 +13,10 @@ const SIZES = {
   lg: { mark: "h-12 w-12", top: "text-2xl", bottom: "text-[10px]" },
 };
 
-/** Logo da marca: marca gráfica em vermelho + lockup tipográfico. */
+/**
+ * Logo da marca: marca gráfica (silhueta da Hipertrofia sobre o vermelho) e
+ * lockup tipográfico. A imagem é um PNG pequeno e já otimizado.
+ */
 export function BrandLogo({ className, size = "md", stacked = true }: BrandLogoProps) {
   const scale = SIZES[size];
 
@@ -22,13 +25,25 @@ export function BrandLogo({ className, size = "md", stacked = true }: BrandLogoP
       <span
         aria-hidden
         className={cn(
-          "relative grid place-items-center rounded-lg bg-gradient-primary shadow-[0_10px_24px_-12px_hsl(var(--primary)/0.9)]",
+          "grid shrink-0 place-items-center overflow-hidden rounded-lg bg-gradient-primary shadow-[0_10px_24px_-12px_hsl(var(--primary)/0.9)]",
           scale.mark,
         )}
       >
-        <span className="font-display text-lg leading-none text-primary-foreground">H</span>
+        <img
+          src="/brand/badge-192.png"
+          alt=""
+          width={192}
+          height={192}
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
       </span>
-      <span className={cn("flex flex-col", stacked ? "leading-none" : "flex-row items-baseline gap-1.5")}>
+      <span
+        className={cn(
+          "flex flex-col",
+          stacked ? "leading-none" : "flex-row items-baseline gap-1.5",
+        )}
+      >
         <span
           className={cn(
             "font-display uppercase leading-none tracking-tight text-foreground",
