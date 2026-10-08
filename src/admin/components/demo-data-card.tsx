@@ -57,10 +57,10 @@ export function DemoDataCard({ productCount, bannerCount, onRemoved }: DemoDataC
   };
 
   return (
-    <section className="rounded-xl border border-primary/35 bg-primary/5 p-5">
+    <section className="rounded-xl border border-border bg-secondary/40 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex gap-3">
-          <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+          <Flame className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden />
           <div className="space-y-1">
             <h2 className="font-display text-lg tracking-tight text-foreground">
               {parts.join(" e ")} de demonstração

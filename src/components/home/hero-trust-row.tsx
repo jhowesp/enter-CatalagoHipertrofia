@@ -17,7 +17,7 @@ export function HeroTrustRow({ className }: { className?: string }) {
           key={item.label}
           className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
         >
-          <item.icon className="h-4 w-4 text-primary" aria-hidden />
+          <item.icon className="h-4 w-4 text-foreground" aria-hidden />
           {item.label}
         </li>
       ))}

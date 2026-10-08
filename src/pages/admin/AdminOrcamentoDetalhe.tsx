@@ -117,7 +117,7 @@ const AdminOrcamentoDetalhe = () => {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="overflow-hidden rounded-xl border border-border bg-card">
           <header className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <Receipt className="h-4 w-4 text-primary" aria-hidden />
+            <Receipt className="h-4 w-4 text-foreground" aria-hidden />
             <h2 className="font-display text-base tracking-tight text-foreground">
               Produtos do orçamento
             </h2>
@@ -161,7 +161,7 @@ const AdminOrcamentoDetalhe = () => {
                   <td className="px-4 py-3 font-semibold text-foreground" colSpan={3}>
                     Total do orçamento
                   </td>
-                  <td className="px-4 py-3 text-right font-display text-xl text-primary">
+                  <td className="px-4 py-3 text-right font-display text-xl text-foreground">
                     {formatCurrency(quote.total)}
                   </td>
                 </tr>

@@ -14,9 +14,9 @@ export function CategoryGrid({ categories }: { categories: Category[] }) {
           <Link
             key={category.id}
             to={`/catalogo?cat=${category.slug}`}
-            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-4 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-glow"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-4 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-card"
           >
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-secondary text-primary transition-colors group-hover:border-primary/50 group-hover:bg-primary group-hover:text-primary-foreground">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-secondary text-foreground transition-colors group-hover:border-foreground/40 group-hover:bg-foreground group-hover:text-background">
               <Icon className="h-5 w-5" aria-hidden />
             </span>
             <span className="text-sm font-semibold leading-tight text-foreground">

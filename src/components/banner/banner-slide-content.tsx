@@ -54,7 +54,7 @@ export function BannerSlideContent({
       <div className="relative w-full px-5 py-7 sm:px-10 sm:py-10 lg:px-14">
         <div className="max-w-xl space-y-3">
           {data.eyebrow && (
-            <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
+            <span className="inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
               {data.eyebrow}
             </span>
           )}

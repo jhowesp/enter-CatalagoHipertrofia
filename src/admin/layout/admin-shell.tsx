@@ -48,7 +48,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             cn(
               "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
               isActive
-                ? "bg-primary/15 text-foreground"
+                ? "bg-foreground/10 text-foreground"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )
           }
@@ -106,7 +106,7 @@ export function AdminShell() {
             <BrandLogo size="sm" />
           </Link>
 
-          <span className="ml-2 hidden text-[11px] font-semibold uppercase tracking-[0.28em] text-primary sm:inline">
+          <span className="ml-2 hidden text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground sm:inline">
             Painel
           </span>
 

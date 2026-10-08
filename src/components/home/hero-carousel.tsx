@@ -181,7 +181,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
                   className={cn(
                     "h-2 rounded-full transition-all",
                     index === current
-                      ? "w-6 bg-primary"
+                      ? "w-6 bg-foreground"
                       : "w-2 bg-muted-foreground/50 hover:bg-muted-foreground",
                   )}
                 />

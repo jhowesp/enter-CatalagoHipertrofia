@@ -44,7 +44,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-lg">
-      <div className="border-b border-border/70 bg-gradient-to-r from-primary/15 via-transparent to-transparent">
+      <div className="border-b border-border/70 bg-gradient-to-r from-secondary/40 via-transparent to-transparent">
         <div className="container flex items-center justify-between gap-3 py-2 text-[11px] text-muted-foreground">
           <span className="truncate">
             {STORE.locationLabel} • Atendimento {STORE.openingHours}
@@ -53,7 +53,7 @@ export function SiteHeader() {
             href={INSTAGRAM_URL}
             target="_blank"
             rel="noreferrer"
-            className="hidden shrink-0 font-semibold text-foreground/80 hover:text-primary sm:inline"
+            className="hidden shrink-0 font-semibold text-foreground/80 hover:text-foreground sm:inline"
           >
             @{STORE.instagramHandle}
           </a>
@@ -123,7 +123,7 @@ export function SiteHeader() {
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-accent"
                       >
-                        <Icon className="h-4 w-4 text-primary" aria-hidden />
+                        <Icon className="h-4 w-4 text-foreground" aria-hidden />
                         {category.name}
                       </Link>
                     );

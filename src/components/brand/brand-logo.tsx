@@ -25,7 +25,7 @@ export function BrandLogo({ className, size = "md", stacked = true }: BrandLogoP
       <span
         aria-hidden
         className={cn(
-          "grid shrink-0 place-items-center overflow-hidden rounded-lg bg-gradient-primary shadow-[0_10px_24px_-12px_hsl(var(--primary)/0.9)]",
+          "grid shrink-0 place-items-center overflow-hidden rounded-lg bg-black",
           scale.mark,
         )}
       >
@@ -54,7 +54,7 @@ export function BrandLogo({ className, size = "md", stacked = true }: BrandLogoP
         </span>
         <span
           className={cn(
-            "font-semibold uppercase tracking-[0.35em] text-primary",
+            "font-semibold uppercase tracking-[0.35em] text-muted-foreground",
             scale.bottom,
             stacked ? "mt-0.5" : "mt-0",
           )}

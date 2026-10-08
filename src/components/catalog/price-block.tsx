@@ -29,7 +29,7 @@ export function PriceBlock({ product, size = "md", className }: PriceBlockProps)
         className={cn(
           "font-display tracking-tight text-foreground",
           PRICE_TEXT[size],
-          hasDiscount && "text-primary",
+          hasDiscount && "text-foreground",
         )}
       >
         {formatCurrency(product.effectivePrice)}

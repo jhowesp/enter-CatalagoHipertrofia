@@ -81,12 +81,12 @@ export function CartDrawer() {
                   <Link
                     to={`/produto/${item.slug}`}
                     onClick={closeCart}
-                    className="line-clamp-2 text-sm font-semibold text-foreground hover:text-primary"
+                    className="line-clamp-2 text-sm font-semibold text-foreground hover:text-foreground"
                   >
                     {item.name}
                   </Link>
                   {item.brandName && (
-                    <span className="text-[11px] uppercase tracking-[0.16em] text-primary">
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-foreground">
                       {item.brandName}
                     </span>
                   )}

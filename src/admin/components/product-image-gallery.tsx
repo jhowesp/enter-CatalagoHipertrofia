@@ -127,7 +127,7 @@ export function ProductImageGallery({
               <div
                 className={cn(
                   "aspect-square overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5",
-                  index === 0 ? "border-primary/60" : "border-border",
+                  index === 0 ? "border-foreground/40" : "border-border",
                 )}
               >
                 <img
@@ -140,7 +140,7 @@ export function ProductImageGallery({
               </div>
 
               {index === 0 && (
-                <span className="absolute left-1.5 top-1.5 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-foreground px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-background">
                   Principal
                 </span>
               )}
@@ -155,7 +155,7 @@ export function ProductImageGallery({
                   onClick={() => setAsMain(index)}
                   title="Usar como foto principal"
                 >
-                  <Star className={cn("h-3.5 w-3.5", index === 0 && "text-primary")} />
+                  <Star className={cn("h-3.5 w-3.5", index === 0 && "text-foreground")} />
                   Principal
                 </Button>
                 <Button

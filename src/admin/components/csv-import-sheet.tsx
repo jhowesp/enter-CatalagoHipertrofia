@@ -272,7 +272,7 @@ export function CsvImportSheet({ open, onOpenChange, onImported }: CsvImportShee
 
               {(preview.newCategories.length > 0 || preview.newBrands.length > 0) &&
                 options.createMissingTaxonomy && (
-                  <div className="space-y-1 rounded-lg border border-primary/35 bg-primary/5 p-4 text-sm">
+                  <div className="space-y-1 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
                     <p className="font-semibold text-foreground">
                       Serão criados automaticamente
                     </p>

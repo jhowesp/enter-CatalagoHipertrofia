@@ -208,8 +208,8 @@ const Produto = () => {
                       className={cn(
                         "aspect-square w-full overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5 transition-colors",
                         index === imageIndex
-                          ? "border-primary"
-                          : "border-border hover:border-primary/60",
+                          ? "border-foreground"
+                          : "border-border hover:border-foreground/30",
                       )}
                     >
                       <img
@@ -229,7 +229,7 @@ const Produto = () => {
           <div className="space-y-6">
             <div className="space-y-3">
               {product.brandName && (
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">
                   {product.brandName}
                 </p>
               )}
@@ -260,8 +260,8 @@ const Produto = () => {
                           className={cn(
                             "flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
                             isSelected
-                              ? "border-primary bg-primary/15 text-foreground"
-                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/60 hover:text-foreground",
+                              ? "border-foreground bg-foreground/10 text-foreground"
+                              : "border-border bg-secondary/40 text-muted-foreground hover:border-foreground/30 hover:text-foreground",
                             soldOut && !isSelected && "opacity-60",
                           )}
                         >
@@ -282,13 +282,13 @@ const Produto = () => {
             <div className="space-y-2 rounded-xl border border-border bg-card p-4 surface-card">
               <PriceBlock product={priceView} size="lg" />
               {displayDiscount > 0 && (
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
                   Economia de {formatCurrency(displayListPrice - displayPrice)} no preço
                   promocional
                 </p>
               )}
               <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Boxes className="h-4 w-4 text-primary" aria-hidden />
+                <Boxes className="h-4 w-4 text-foreground" aria-hidden />
                 {inventoryLabel(displayStock, STORE.lowStockThreshold)}
               </p>
             </div>
@@ -356,7 +356,7 @@ const Produto = () => {
               </div>
 
               {needsFlavor && (
-                <p className="text-xs font-semibold text-primary">
+                <p className="text-xs font-semibold text-foreground">
                   Escolha um sabor acima para adicionar ao orçamento.
                 </p>
               )}
@@ -369,7 +369,7 @@ const Produto = () => {
             {(specs.length > 0 || product.weight || currentFlavor) && (
               <section className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <h2 className="flex items-center gap-2 font-display text-base tracking-tight text-foreground">
-                  <Tag className="h-4 w-4 text-primary" aria-hidden />
+                  <Tag className="h-4 w-4 text-foreground" aria-hidden />
                   Informações do produto
                 </h2>
                 <dl className="grid gap-2 sm:grid-cols-2">
@@ -433,11 +433,11 @@ const Produto = () => {
 
             <ul className="grid gap-2 text-xs text-muted-foreground">
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" aria-hidden />
+                <Check className="h-4 w-4 text-foreground" aria-hidden />
                 Orçamento enviado direto para o WhatsApp da loja
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" aria-hidden />
+                <Check className="h-4 w-4 text-foreground" aria-hidden />
                 Retirada em {STORE.locationLabel} • {STORE.openingDays}, {STORE.openingHours}
               </li>
             </ul>

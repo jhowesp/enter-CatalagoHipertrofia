@@ -179,7 +179,7 @@ const AdminBanners = () => {
                       )}
                     </p>
                     {banner.eyebrow && (
-                      <p className="truncate text-[11px] uppercase tracking-[0.18em] text-primary">
+                      <p className="truncate text-[11px] uppercase tracking-[0.18em] text-foreground">
                         {banner.eyebrow}
                       </p>
                     )}

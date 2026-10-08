@@ -32,7 +32,7 @@ export function SiteFooter() {
             href={whatsappUrl(buildSupportMessage())}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:underline"
           >
             <MessageCircle className="h-4 w-4" aria-hidden />
             Falar no WhatsApp
@@ -45,7 +45,7 @@ export function SiteFooter() {
           </h2>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden />
               <a
                 href={whatsappUrl(buildSupportMessage())}
                 target="_blank"
@@ -56,7 +56,7 @@ export function SiteFooter() {
               </a>
             </li>
             <li className="flex items-start gap-2">
-              <Instagram className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <Instagram className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden />
               <a
                 href={INSTAGRAM_URL}
                 target="_blank"
@@ -67,11 +67,11 @@ export function SiteFooter() {
               </a>
             </li>
             <li className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden />
               {STORE.locationLabel}
             </li>
             <li className="flex items-start gap-2">
-              <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <Clock className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden />
               {STORE.openingDays}, {STORE.openingHours}
             </li>
           </ul>

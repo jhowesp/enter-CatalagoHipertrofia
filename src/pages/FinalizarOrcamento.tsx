@@ -241,7 +241,7 @@ const FinalizarOrcamento = () => {
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Valor total
                 </dt>
-                <dd className="font-display text-lg text-primary">
+                <dd className="font-display text-lg text-foreground">
                   {formatCurrency(confirmed.total)}
                 </dd>
               </div>
@@ -412,7 +412,7 @@ const FinalizarOrcamento = () => {
           <aside className="lg:sticky lg:top-32 lg:self-start">
             <div className="space-y-4 rounded-xl border border-border bg-card p-5 surface-card">
               <h2 className="flex items-center gap-2 font-display text-lg tracking-tight text-foreground">
-                <ShoppingCart className="h-4 w-4 text-primary" aria-hidden />
+                <ShoppingCart className="h-4 w-4 text-foreground" aria-hidden />
                 Resumo do orçamento
               </h2>
 
@@ -435,7 +435,7 @@ const FinalizarOrcamento = () => {
 
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <span className="font-semibold text-foreground">Total</span>
-                <span className="font-display text-2xl text-primary">
+                <span className="font-display text-2xl text-foreground">
                   {formatCurrency(totalValue)}
                 </span>
               </div>

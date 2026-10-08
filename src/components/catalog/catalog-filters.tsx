@@ -58,12 +58,12 @@ function FilterOption({
       className={cn(
         "flex items-center justify-between gap-2 rounded-md border px-3 py-2.5 text-left text-sm transition-colors",
         active
-          ? "border-primary/60 bg-primary/10 text-foreground"
+          ? "border-foreground/40 bg-secondary text-foreground"
           : "border-transparent bg-secondary/40 text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       <span className="truncate">{label}</span>
-      {active && <X className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />}
+      {active && <X className="h-3.5 w-3.5 shrink-0 text-foreground" aria-hidden />}
     </button>
   );
 }
@@ -141,7 +141,7 @@ export function CatalogFilters(props: FiltersPanelProps) {
               <SlidersHorizontal />
               Filtros
               {activeCount > 0 && (
-                <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                <span className="ml-1 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold text-background">
                   {activeCount}
                 </span>
               )}

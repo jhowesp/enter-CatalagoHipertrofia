@@ -13,7 +13,7 @@ type StatCardProps = {
 
 const TONES = {
   default: "text-foreground",
-  primary: "text-primary",
+  primary: "text-foreground",
   warning: "text-warning",
   success: "text-success",
 };

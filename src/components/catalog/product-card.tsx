@@ -22,7 +22,7 @@ export function ProductCard({ product, onAdd, priority = false, className }: Pro
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card surface-card transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-glow",
+        "group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card surface-card transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-card",
         className,
       )}
     >
@@ -48,13 +48,13 @@ export function ProductCard({ product, onAdd, priority = false, className }: Pro
 
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         {product.brandName && (
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground">
             {product.brandName}
           </span>
         )}
 
         <h3 className="line-clamp-2 font-sans text-sm font-semibold normal-case leading-snug tracking-normal text-foreground">
-          <Link to={`/produto/${product.slug}`} className="hover:text-primary">
+          <Link to={`/produto/${product.slug}`} className="hover:text-foreground">
             {product.name}
           </Link>
         </h3>

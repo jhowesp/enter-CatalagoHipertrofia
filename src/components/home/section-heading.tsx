@@ -37,7 +37,7 @@ export function SectionHeading({
       {href && (
         <Link
           to={href}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-foreground hover:underline"
         >
           {linkLabel}
           <ArrowRight className="h-4 w-4" aria-hidden />

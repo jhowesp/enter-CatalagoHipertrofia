@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 function LoadingScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+      <Loader2 className="h-8 w-8 animate-spin text-foreground" aria-hidden />
       <p className="text-sm text-muted-foreground">Verificando seu acesso...</p>
     </div>
   );
@@ -25,7 +25,7 @@ function ForbiddenScreen({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-gradient-hero px-6 text-center">
       <BrandLogo size="lg" />
-      <ShieldAlert className="h-10 w-10 text-primary" aria-hidden />
+      <ShieldAlert className="h-10 w-10 text-foreground" aria-hidden />
       <div className="space-y-2">
         <h1 className="font-display text-2xl tracking-tight text-foreground">
           Acesso não autorizado

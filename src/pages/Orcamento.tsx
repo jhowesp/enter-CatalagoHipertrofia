@@ -78,12 +78,12 @@ const Orcamento = () => {
 
                   <div className="min-w-0 flex-1 space-y-1">
                     {item.brandName && (
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground">
                         {item.brandName}
                       </p>
                     )}
                     <h2 className="text-sm font-semibold text-foreground">
-                      <Link to={`/produto/${item.slug}`} className="hover:text-primary">
+                      <Link to={`/produto/${item.slug}`} className="hover:text-foreground">
                         {item.name}
                       </Link>
                     </h2>
@@ -161,7 +161,7 @@ const Orcamento = () => {
                   </div>
                   <div className="flex items-center justify-between border-t border-border pt-3">
                     <dt className="font-semibold text-foreground">Valor total</dt>
-                    <dd className="font-display text-2xl text-primary">
+                    <dd className="font-display text-2xl text-foreground">
                       {formatCurrency(totalValue)}
                     </dd>
                   </div>

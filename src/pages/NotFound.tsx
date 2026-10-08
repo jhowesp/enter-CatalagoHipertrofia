@@ -16,7 +16,7 @@ const NotFound = () => {
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-hero px-6 text-center">
       <BrandLogo size="lg" />
 
-      <SearchX className="h-12 w-12 text-primary" aria-hidden />
+      <SearchX className="h-12 w-12 text-foreground" aria-hidden />
 
       <div className="space-y-2">
         <h1 className="font-display text-4xl tracking-tight text-foreground">

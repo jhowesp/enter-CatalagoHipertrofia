@@ -9,7 +9,7 @@ import { QUOTE_STATUS_LABELS, QUOTE_STATUS_OPTIONS, type QuoteStatus } from "@/c
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLES: Record<QuoteStatus, string> = {
-  new: "bg-primary/15 text-primary border-primary/40",
+  new: "bg-foreground/10 text-foreground border-border",
   in_progress: "bg-warning/15 text-warning border-warning/40",
   sold: "bg-success/15 text-success border-success/40",
   cancelled: "bg-secondary text-muted-foreground border-border",

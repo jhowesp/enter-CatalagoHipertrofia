@@ -139,7 +139,7 @@ export function ProductsTable({
                       <p className="truncate text-[11px] text-muted-foreground">
                         {categoryName(product.category_id)} • {brandName(product.brand_id)}
                         {product.is_demo && (
-                          <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                          <span className="ml-2 rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
                             demonstração
                           </span>
                         )}
@@ -231,7 +231,7 @@ export function ProductsTable({
                   {categoryName(product.category_id)} • {brandName(product.brand_id)}
                 </p>
                 {product.is_demo && (
-                  <span className="mt-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                  <span className="mt-1 inline-block rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
                     demonstração
                   </span>
                 )}

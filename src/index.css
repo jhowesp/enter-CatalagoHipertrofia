@@ -42,23 +42,23 @@
 
     --border: 0 0% 16%;
     --input: 0 0% 18%;
-    --ring: 356 88% 47%;
+    --ring: 0 0% 88%;
 
     --radius: 0.75rem;
 
     --gradient-hero: radial-gradient(
-        circle at 18% 12%,
-        hsl(356 88% 47% / 0.38),
-        transparent 58%
+        circle at 18% 8%,
+        hsl(0 0% 17% / 0.6),
+        transparent 60%
       ),
-      radial-gradient(circle at 88% 82%, hsl(356 92% 60% / 0.18), transparent 55%),
+      radial-gradient(circle at 85% 85%, hsl(0 0% 13% / 0.55), transparent 55%),
       linear-gradient(158deg, hsl(0 0% 11%) 0%, hsl(0 0% 4%) 62%);
     --gradient-primary: linear-gradient(135deg, hsl(356 88% 47%), hsl(356 92% 60%));
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 9%) 0%, hsl(0 0% 6%) 100%);
     --gradient-soft: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 7%) 100%);
 
     --shadow-card: 0 18px 44px -28px hsl(0 0% 0% / 0.95);
-    --shadow-glow: 0 0 42px hsl(356 88% 47% / 0.34);
+    --shadow-glow: 0 20px 44px -26px hsl(0 0% 0% / 0.95);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 6%;
@@ -97,7 +97,7 @@
     --warning-foreground: 0 0% 8%;
     --border: 0 0% 16%;
     --input: 0 0% 18%;
-    --ring: 356 88% 47%;
+    --ring: 0 0% 88%;
   }
 }
 
@@ -133,10 +133,6 @@
   .surface-card {
     background-image: var(--gradient-surface);
     box-shadow: var(--shadow-card);
-  }
-
-  .text-glow {
-    text-shadow: 0 0 28px hsl(var(--primary) / 0.45);
   }
 
   .no-scrollbar::-webkit-scrollbar {
