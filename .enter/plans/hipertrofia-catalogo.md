@@ -1623,3 +1623,106 @@ nada é alterado no código e nada é publicado. Fica registrado apenas como ref
 - Selo: injetado pela plataforma no HTML servido; no projeto/build/bundle não existe
 - Se um dia quiser removê-lo: configuração/plano de publicação da plataforma, ou hospedar o build
   estático (`dist/`) fora da plataforma
+
+---
+
+# Urgente: finalização do orçamento não abre o WhatsApp (aba branca) + desempenho
+
+## 1. O bug (causa raiz encontrada)
+
+`src/lib/whatsapp.ts` abre a aba assim:
+
+```ts
+return window.open("", "_blank", "noopener,noreferrer");
+```
+
+**Com `noopener`, o navegador cria a aba mas retorna `null`** (comportamento previsto em
+especificação, igual no Chrome, Firefox e Safari). Consequência exata do que você viu:
+
+1. o navegador **abre uma aba em branco** (a "tela branca");
+2. a função devolve `null`, então `sendPendingWindowToWhatsapp(null, url)` devolve `false`;
+3. **ninguém navega aquela aba** → o WhatsApp nunca abre e a aba branca fica órfã.
+
+Não há erro no console porque não é exceção: é a aba que ficou solta. Os logs capturados são só
+telemetria da plataforma, sem erro da aplicação.
+
+### Correção
+
+Em `src/lib/whatsapp.ts`:
+
+- abrir a aba **sem `noopener`**, para ter a referência: `window.open("about:blank", "_blank")`;
+- escrever **imediatamente** na aba uma mensagem curta ("Abrindo o WhatsApp...") — assim ela nunca
+  aparece em branco, mesmo na fração de segundo antes de navegar;
+- após navegar, limpar a referência (`pending.opener = null`) por segurança;
+- manter o caminho de exceção: se a aba for bloqueada (`null`), **não deixar beco sem saída** — a tela
+  de sucesso continua com o botão grande "Abrir conversa no WhatsApp" e o aviso explicando o bloqueio;
+- se o salvamento falhar, fechar a aba reservada (comportamento já existente).
+
+## 2. Desempenho (com número, antes e depois)
+
+Medido agora: bundle principal **2.345 kB (491 kB gzip)** — pesado para um site mobile-first.
+
+Três medidas, sem tocar em catálogo, carrinho, orçamento, painel, layout ou tema:
+
+1. **Remover o i18n do carregamento inicial.** `src/main.tsx` importa `./i18n/config`, o que traz
+   `i18next`, `i18next-http-backend`, `i18next-browser-languagedetector` e `react-i18next` para dentro
+   do bundle do cliente. Verificado: o site **não usa nenhuma tradução** — o único arquivo que usa
+   (`src/components/language-switcher.tsx`) **não é importado em lugar nenhum**. O app é PT-BR fixo.
+2. **Carregar o painel sob demanda** (`React.lazy` + `Suspense` em `src/router.tsx`): hoje as 8 telas
+   do admin entram no bundle de todo visitante, junto com o `papaparse` (usado só na importação CSV do
+   painel). O cliente passa a baixar o painel somente se entrar em `/admin`.
+3. **Separar os fornecedores em blocos** (`vite.config.ts`, `manualChunks` para React/Router, cliente
+   do backend e React Query): melhora o cache do navegador entre versões e acaba o aviso de chunk
+   acima de 500 kB.
+
+Depois das mudanças, eu **reconstruo e informo os números medidos** (antes/depois), sem prometer
+percentual: o número é a prova.
+
+## 3. "Intuitivo"
+
+Não vou adivinhar mudanças de usabilidade e mexer no que você não reclamou. Sobre este fluxo, o que eu
+posso afirmar é o que o bug causava: a pessoa finalizava, via uma aba branca e não entendia o que
+aconteceu. Corrigido isso, o fluxo volta a ser: preencher → enviar → WhatsApp abre com a mensagem
+pronta → tela de confirmação com o resumo. Se algum outro ponto estiver confuso, me diga a tela e o
+que você esperava — aí eu ajusto com precisão.
+
+## 4. Publicação
+
+Importante ser exato: **eu não tenho ação de publicar**. O projeto é versionado e o preview é
+atualizado automaticamente a cada alteração, mas o site publicado só recebe a versão nova quando
+**você publica** pela plataforma. Então: eu corrijo, testo o que dá para testar daqui e te aviso —
+a publicação continua sendo sua decisão.
+
+## Arquivos
+
+- `src/lib/whatsapp.ts` (correção do bug).
+- `src/main.tsx` (remover o bootstrap de i18n) e remoção do `src/components/language-switcher.tsx`
+  (não usado).
+- `src/router.tsx` (painel sob demanda com `React.lazy`/`Suspense`).
+- `vite.config.ts` (`manualChunks`).
+
+## Checklist de implementação
+
+- [ ] `openPendingWhatsappWindow` abre a aba sem `noopener` e devolve a referência utilizável.
+- [ ] A aba reservada recebe uma mensagem imediata (nunca fica em branco).
+- [ ] Após navegar, `opener` é limpo.
+- [ ] Caminho de aba bloqueada mantém a tela de sucesso com o botão manual, sem beco sem saída.
+- [ ] `src/main.tsx` sem `import "./i18n/config"`; `language-switcher.tsx` removido por não ter uso.
+- [ ] `src/router.tsx` com as telas do painel via `React.lazy` + `Suspense` (com fallback visível).
+- [ ] `vite.config.ts` com `manualChunks` para os fornecedores.
+- [ ] Nenhuma alteração em catálogo, carrinho, orçamento, painel, layout, tema ou banco.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Bundle principal medido antes (2.345 kB / 491 kB gzip) e **depois**, com os dois números
+      registrados no chat.
+- [ ] Build confirma que o painel saiu do bundle inicial (aparece como bloco separado).
+- [ ] URL do WhatsApp gerada no formato `https://wa.me/5519993419516?text=...` responde HTTP 200
+      (teste por requisição, sem abrir navegador).
+- [ ] Orçamento de teste salvando no banco (chamada anônima real, como o navegador faz) e o registro
+      removido depois.
+- [ ] Nada publicado por mim; a publicação fica com você.
+- [ ] Limitação declarada: o clique em "Enviar orçamento pelo WhatsApp" eu não consigo executar pela
+      captura de tela; a correção do pop-up é de comportamento do navegador e depende da sua
+      conferência — mas a causa era objetiva e está corrigida.
