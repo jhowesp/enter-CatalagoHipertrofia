@@ -1726,3 +1726,36 @@ a publicação continua sendo sua decisão.
 - [ ] Limitação declarada: o clique em "Enviar orçamento pelo WhatsApp" eu não consigo executar pela
       captura de tela; a correção do pop-up é de comportamento do navegador e depende da sua
       conferência — mas a causa era objetiva e está corrigida.
+
+---
+
+# Padrão de tamanho das artes de banner (medição feita)
+
+## O que foi medido
+
+- Arte no ar hoje: **1920 × 560 px (3,43:1)** → no celular ela renderiza **390 × 114 px** (tira fina).
+- A faixa do banner tem largura total e **altura fixa quando há texto**: 300 px (celular), 380 px
+  (tablet), 440 px (desktop) — com largura fluida, a proporção da moldura muda por tela
+  (1,30:1 no celular contra 4,36:1 num monitor de 1920).
+- Banner **só imagem** usa altura natural: a arte mantém a proporção em qualquer largura (não corta,
+  não sobra faixa), mas o peso visual varia com a proporção escolhida.
+
+## Recomendação
+
+| Padrão | Celular (390) | Desktop (1280) | Quando escolher |
+|---|---|---|---|
+| **1920 × 640 (3:1)** — recomendado | 390 × 130 px | 1280 × 427 px | equilíbrio para loja; padrão único sem mexer no código |
+| 1920 × 960 (2:1) | 390 × 195 px | 1280 × 640 px | prioridade é presença no celular; desktop fica alto |
+| 1920 × 1080 (16:9) | 390 × 219 px | 1280 × 720 px | bem no celular, banner alto no desktop |
+| Duas artes: desktop 1920 × 640 + celular 1080 × 1080 | arte quadrada | arte 3:1 | resultado profissional; exige campo novo no painel e código |
+
+Regras de produção (importantes com 3:1): qualquer texto desenhado na arte é reduzido a ~1/5 no
+celular (390/1920), então **texto com menos de ~56 px de altura na arte fica ilegível no celular**.
+Exportar em PNG, JPG ou WEBP até 5 MB (limite do bucket) e manter a informação principal na faixa
+central.
+
+## Decisão pendente
+
+O usuário cancelou a escolha do padrão. Nada foi alterado no código. Se ele escolher a opção de duas
+artes, o plano é: coluna nova `image_url_mobile` em `banners`, upload extra no formulário do painel, e
+`<picture>` com `media` no slide (celular usa a arte quadrada, desktop a 3:1).
