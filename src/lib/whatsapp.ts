@@ -103,13 +103,35 @@ export function whatsappUrlForNumber(number: string, message: string): string {
 }
 
 /**
- * Abre uma aba vazia de forma síncrona no clique do usuário.
- * Isso evita o bloqueador de pop-up quando a mensagem só fica pronta
- * depois de salvar o orçamento no banco.
+ * Abre uma aba vazia de forma síncrona no clique do usuário, para o navegador não
+ * bloquear a abertura depois que o orçamento é salvo.
+ *
+ * ATENÇÃO: não use `noopener` aqui. Com `noopener` o navegador abre a aba mas devolve
+ * `null`, e aí a aba fica em branco e nunca é navegada para o WhatsApp (era exatamente
+ * esse o bug da "tela branca ao finalizar"). A referência é necessária para navegar;
+ * por segurança, ela é anulada logo depois da navegação.
  */
 export function openPendingWhatsappWindow(): Window | null {
   try {
-    return window.open("", "_blank", "noopener,noreferrer");
+    const pending = window.open("about:blank", "_blank");
+
+    if (pending) {
+      try {
+        // Enquanto o orçamento é salvo, a aba mostra uma mensagem em vez de ficar branca.
+        pending.document.write(
+          '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">' +
+            "<title>Abrindo o WhatsApp...</title></head>" +
+            '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;' +
+            'background:#0a0a0b;color:#f5f5f5;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif">' +
+            "<p>Abrindo o WhatsApp com o seu orçamento...</p></body></html>",
+        );
+        pending.document.close();
+      } catch {
+        /* se não for possível escrever, a aba segue vazia por um instante */
+      }
+    }
+
+    return pending;
   } catch {
     return null;
   }
@@ -121,6 +143,14 @@ export function sendPendingWindowToWhatsapp(
 ): boolean {
   if (pending && !pending.closed) {
     pending.location.href = url;
+
+    try {
+      // A aba já foi para o WhatsApp: soltamos a referência da página da loja.
+      pending.opener = null;
+    } catch {
+      /* alguns navegadores não permitem alterar; não é impeditivo */
+    }
+
     return true;
   }
   return false;

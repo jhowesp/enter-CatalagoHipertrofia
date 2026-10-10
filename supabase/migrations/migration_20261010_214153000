@@ -1,0 +1,1 @@
+delete from public.quotes where id = '133d7104-5b68-4c75-8f5f-960577a7eace'::uuid and customer_name = 'TESTE POS CORRECAO';
