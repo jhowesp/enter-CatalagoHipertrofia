@@ -225,7 +225,9 @@ const FinalizarOrcamento = () => {
                   Orçamento enviado para a loja
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Registramos seu orçamento e abrimos a conversa no WhatsApp.
+                  {confirmed.whatsappOpened
+                    ? "Seu orçamento já foi aberto no WhatsApp, com todos os itens na mensagem. É só tocar em enviar para concluir."
+                    : "Registramos seu orçamento. Abra o WhatsApp para enviar a mensagem pronta para a loja."}
                 </p>
               </div>
             </div>
@@ -272,7 +274,7 @@ const FinalizarOrcamento = () => {
             {!confirmed.whatsappOpened && (
               <Alert>
                 <AlertTriangle />
-                <AlertTitle>Abra a conversa no WhatsApp</AlertTitle>
+                <AlertTitle>Abra o WhatsApp para enviar</AlertTitle>
                 <AlertDescription>
                   O navegador bloqueou a abertura automática. Toque no botão abaixo para
                   enviar a mensagem com seu orçamento.
@@ -281,17 +283,32 @@ const FinalizarOrcamento = () => {
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Button variant="brand" size="xl" asChild>
-                <a href={confirmed.whatsappUrl} target="_blank" rel="noreferrer">
-                  <MessageCircle />
-                  Abrir conversa no WhatsApp
-                </a>
-              </Button>
-              <Button variant="outline" size="xl" asChild>
+              {/*
+                A conversa já abre sozinha ao finalizar. Quando isso acontece, o botão
+                principal passa a ser voltar ao catálogo — ninguém precisa apertar nada para
+                o pedido chegar na loja, só tocar em enviar dentro do WhatsApp.
+              */}
+              <Button
+                variant={confirmed.whatsappOpened ? "brand" : "outline"}
+                size="xl"
+                asChild
+              >
                 <Link to="/catalogo">
                   Voltar ao catálogo
                   <ArrowRight />
                 </Link>
+              </Button>
+              <Button
+                variant={confirmed.whatsappOpened ? "outline" : "brand"}
+                size="xl"
+                asChild
+              >
+                <a href={confirmed.whatsappUrl} target="_blank" rel="noreferrer">
+                  <MessageCircle />
+                  {confirmed.whatsappOpened
+                    ? "Abrir o WhatsApp de novo"
+                    : "Abrir o WhatsApp com o orçamento"}
+                </a>
               </Button>
             </div>
 
