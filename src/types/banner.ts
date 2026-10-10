@@ -49,6 +49,19 @@ export function bannerLabel(banner: Pick<Banner, "title" | "ctaLabel">): string 
   return banner.title ?? banner.ctaLabel ?? "Banner promocional";
 }
 
+/**
+ * Banner só com arte: tem imagem e não tem selo, título, subtítulo nem botão.
+ * Nesse caso a arte manda no visual — nada de véu por cima nem corte —, então a
+ * altura acompanha a imagem em vez de uma faixa fixa.
+ */
+export function isImageOnlyBanner(
+  banner: Pick<Banner, "imageUrl" | "eyebrow" | "title" | "subtitle" | "ctaLabel">,
+): boolean {
+  return Boolean(
+    banner.imageUrl && !banner.eyebrow && !banner.title && !banner.subtitle && !banner.ctaLabel,
+  );
+}
+
 /** Link de destino seguro: interno ou http(s). Qualquer outro esquema é descartado. */
 export function isSafeBannerHref(href: string | null): boolean {
   if (!href) return false;

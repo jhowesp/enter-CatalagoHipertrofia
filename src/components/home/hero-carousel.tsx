@@ -12,7 +12,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { STORE } from "@/config/store";
-import { bannerLabel, isSafeBannerHref, type Banner } from "@/types/banner";
+import { bannerLabel, isImageOnlyBanner, isSafeBannerHref, type Banner } from "@/types/banner";
 import { cn } from "@/lib/utils";
 
 const AUTOPLAY_MS = 6000;
@@ -128,35 +128,44 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
         onFocusCapture={() => setPausedByPointer(true)}
         onBlurCapture={() => setPausedByPointer(false)}
       >
-        <CarouselContent className="-ml-0">
-          {banners.map((banner, index) => (
-            <CarouselItem
-              key={banner.id}
-              className="pl-0"
-              aria-roledescription="slide"
-              aria-label={`${index + 1} de ${banners.length}: ${bannerLabel(banner)}`}
-            >
-              <article
-                className={cn(
-                  "h-[300px] w-full sm:h-[380px] lg:h-[440px]",
-                  !multiple && "sm:h-[360px] lg:h-[420px]",
-                )}
+        <CarouselContent className="-ml-0 items-center">
+          {banners.map((banner, index) => {
+            const imageOnly = isImageOnlyBanner(banner);
+
+            return (
+              <CarouselItem
+                key={banner.id}
+                className="pl-0"
+                aria-roledescription="slide"
+                aria-label={`${index + 1} de ${banners.length}: ${bannerLabel(banner)}`}
               >
-                <BannerLink banner={banner}>
-                  <BannerSlideContent
-                    data={{
-                      eyebrow: banner.eyebrow,
-                      title: banner.title,
-                      subtitle: banner.subtitle,
-                      imageUrl: banner.imageUrl,
-                      ctaLabel: banner.ctaLabel,
-                    }}
-                    priority={index === 0}
-                  />
-                </BannerLink>
-              </article>
-            </CarouselItem>
-          ))}
+                <article
+                  className={cn(
+                    "w-full",
+                    /* Só arte: a altura vem da imagem. Com texto: faixa de altura fixa. */
+                    !imageOnly &&
+                      cn(
+                        "h-[300px] sm:h-[380px] lg:h-[440px]",
+                        !multiple && "sm:h-[360px] lg:h-[420px]",
+                      ),
+                  )}
+                >
+                  <BannerLink banner={banner}>
+                    <BannerSlideContent
+                      data={{
+                        eyebrow: banner.eyebrow,
+                        title: banner.title,
+                        subtitle: banner.subtitle,
+                        imageUrl: banner.imageUrl,
+                        ctaLabel: banner.ctaLabel,
+                      }}
+                      priority={index === 0}
+                    />
+                  </BannerLink>
+                </article>
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
 
         {multiple && (

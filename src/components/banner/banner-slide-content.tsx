@@ -38,23 +38,39 @@ export function BannerSlideContent({
   const imageOnly = hasImage && !hasText && !hasCta;
 
   return (
-    <div className={cn("relative flex h-full w-full items-center overflow-hidden", className)}>
+    <div
+      className={cn(
+        "relative flex w-full items-center overflow-hidden",
+        imageOnly ? "photo-surface h-auto" : "h-full",
+        className,
+      )}
+    >
       {hasImage ? (
-        <>
+        imageOnly ? (
+          /* Só arte: a imagem fica no fluxo, então a altura acompanha e nada é cortado.
+             O limite de segurança evita que uma arte muito alta domine a tela. */
           <img
             src={data.imageUrl as string}
             alt=""
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="h-auto max-h-[70vh] w-full object-contain sm:max-h-[560px]"
           />
-          {!imageOnly && (
+        ) : (
+          <>
+            <img
+              src={data.imageUrl as string}
+              alt=""
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
             <div
               aria-hidden
               className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/35"
             />
-          )}
-        </>
+          </>
+        )
       ) : (
         <div aria-hidden className="absolute inset-0 bg-gradient-hero" />
       )}
