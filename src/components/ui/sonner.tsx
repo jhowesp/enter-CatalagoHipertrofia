@@ -1,15 +1,15 @@
+import { useTheme } from "next-themes"
 import { Toaster as Sonner, toast } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
-/**
- * A loja é escura por identidade, então o tema do toast é fixo em "dark"
- * (não depende do provider de temas do shadcn).
- */
+/** Os avisos seguem o tema atual (claro/escuro) escolhido pelo cliente. */
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { resolvedTheme } = useTheme()
+
   return (
     <Sonner
-      theme="dark"
+      theme={(resolvedTheme === "light" ? "light" : "dark") as ToasterProps["theme"]}
       position="top-center"
       className="toaster group"
       toastOptions={{

@@ -126,7 +126,7 @@ export function ProductImageGallery({
             <li key={url} className="group relative">
               <div
                 className={cn(
-                  "aspect-square overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5",
+                  "aspect-square overflow-hidden rounded-lg border photo-surface p-1.5",
                   index === 0 ? "border-foreground/40" : "border-border",
                 )}
               >

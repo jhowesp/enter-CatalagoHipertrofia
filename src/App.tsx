@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { ThemeProvider } from "./components/theme-provider";
 import { QuoteCartProvider } from "./context/quote-cart";
 import { routers } from "./router";
 
@@ -19,15 +20,17 @@ const queryClient = new QueryClient({
 const App = () => {
   const router = createBrowserRouter(routers);
   return (
-    <QueryClientProvider client={queryClient}>
-      <QuoteCartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <RouterProvider router={router} />
-        </TooltipProvider>
-      </QuoteCartProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <QuoteCartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <RouterProvider router={router} />
+          </TooltipProvider>
+        </QuoteCartProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

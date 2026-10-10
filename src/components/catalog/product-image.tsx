@@ -23,7 +23,7 @@ export function ProductImage({ src, alt, priority = false, className }: ProductI
         role="img"
         aria-label={`${alt} — foto ainda não cadastrada`}
         className={cn(
-          "flex h-full w-full flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_20%),hsl(0_0%_7%))] text-muted-foreground/70",
+          "flex h-full w-full flex-col items-center justify-center gap-2 photo-surface text-muted-foreground/70",
           className,
         )}
       >

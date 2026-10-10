@@ -50,7 +50,7 @@ export function Hero() {
         </div>
 
         <div className="relative hidden lg:block">
-          <div className="relative mx-auto w-full max-w-sm rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_10%,hsl(0_0%_16%),hsl(0_0%_6%))] p-8 shadow-card">
+          <div className="relative mx-auto w-full max-w-sm rounded-2xl border border-border photo-surface p-8 shadow-card">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
               Atendimento direto
             </p>

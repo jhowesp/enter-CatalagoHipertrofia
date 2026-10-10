@@ -26,6 +26,22 @@
     content="Whey protein, creatina, pré-treino e muito mais. Monte seu orçamento sem compromisso e finalize pelo WhatsApp." />
   <meta property="og:image" content="/brand/v2/og.png" />
   <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Aplica o tema salvo antes do React renderizar, para não piscar o tema errado. -->
+  <script>
+    (function () {
+      try {
+        var saved = window.localStorage.getItem("hipertrofia-tema");
+        var isDark = saved ? saved === "dark" : true;
+        document.documentElement.classList.toggle("dark", isDark);
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", isDark ? "#0A0A0B" : "#FFFFFF");
+      } catch (error) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+  </script>
 </head>
 
 <body>

@@ -244,7 +244,7 @@ export function BannerFormSheet({
           <div className="space-y-2">
             <Label>Imagem de fundo (opcional)</Label>
             <div className="flex items-start gap-3">
-              <div className="h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))]">
+              <div className="h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-border photo-surface">
                 {form.imageUrl ? (
                   <img
                     src={form.imageUrl}

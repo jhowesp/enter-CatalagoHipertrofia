@@ -61,7 +61,7 @@ export function CartDrawer() {
                 key={item.key}
                 className="flex gap-3 rounded-lg border border-border bg-card p-3"
               >
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md photo-surface p-1.5">
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}

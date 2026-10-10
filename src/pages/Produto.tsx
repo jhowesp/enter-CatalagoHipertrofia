@@ -184,7 +184,7 @@ const Produto = () => {
 
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-3">
-            <div className="relative overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_12%,hsl(0_0%_16%),hsl(0_0%_6%))] p-6">
+            <div className="relative overflow-hidden rounded-2xl border border-border photo-surface p-6">
               <div className="aspect-square w-full">
                 <ProductImage src={activeImage} alt={product.name} priority />
               </div>
@@ -206,7 +206,7 @@ const Produto = () => {
                       aria-pressed={index === imageIndex}
                       aria-label={`Ver foto ${index + 1} de ${gallery.length}`}
                       className={cn(
-                        "aspect-square w-full overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1.5 transition-colors",
+                        "aspect-square w-full overflow-hidden rounded-lg border photo-surface p-1.5 transition-colors",
                         index === imageIndex
                           ? "border-foreground"
                           : "border-border hover:border-foreground/30",

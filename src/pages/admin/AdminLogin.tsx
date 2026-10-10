@@ -91,7 +91,8 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-hero px-4 py-12">
+    <div className="dark">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-hero px-4 py-12">
       <div className="w-full max-w-md space-y-6 rounded-2xl border border-border bg-card p-6 surface-card sm:p-8">
         <div className="space-y-3 text-center">
           <BrandLogo size="lg" className="justify-center" />
@@ -158,6 +159,7 @@ const AdminLogin = () => {
             Voltar para o site
           </Link>
         </p>
+        </div>
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ export function ProductCard({ product, onAdd, priority = false, className }: Pro
     >
       <Link
         to={`/produto/${product.slug}`}
-        className="relative block aspect-square w-full overflow-hidden bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-3"
+        className="relative block aspect-square w-full overflow-hidden photo-surface p-3"
         aria-label={`Ver detalhes de ${product.name}`}
       >
         <ProductImage

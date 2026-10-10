@@ -80,7 +80,8 @@ export function AdminShell() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="dark">
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3">
           <Sheet>
@@ -138,6 +139,7 @@ export function AdminShell() {
         <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
           <Outlet />
         </main>
+      </div>
       </div>
     </div>
   );

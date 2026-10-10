@@ -23,7 +23,7 @@ type ProductsTableProps = {
 
 function ProductThumb({ product }: { product: ProductRow }) {
   return (
-    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-border bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-1">
+    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-border photo-surface p-1">
       {product.image_url ? (
         <img
           src={product.image_url}

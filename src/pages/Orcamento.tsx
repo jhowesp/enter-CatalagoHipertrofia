@@ -60,7 +60,7 @@ const Orcamento = () => {
                   key={item.key}
                   className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 surface-card sm:flex-row sm:items-center"
                 >
-                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[radial-gradient(circle_at_50%_15%,hsl(0_0%_16%),hsl(0_0%_6%))] p-2">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg photo-surface p-2">
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}

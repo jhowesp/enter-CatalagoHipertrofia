@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Menu, MessageCircle, Search, ShoppingCart } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -131,6 +132,16 @@ export function SiteHeader() {
                 </div>
               </div>
 
+              <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Aparência</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Alterne entre modo claro e escuro.
+                  </p>
+                </div>
+                <ThemeToggle />
+              </div>
+
               <div className="space-y-1 rounded-lg border border-border bg-card p-4 text-xs text-muted-foreground">
                 <p className="font-semibold text-foreground">Atendimento</p>
                 <p>WhatsApp {WHATSAPP_DISPLAY}</p>
@@ -177,6 +188,8 @@ export function SiteHeader() {
         </form>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <ThemeToggle />
+
           <Button
             variant="whatsapp"
             size="icon-lg"
