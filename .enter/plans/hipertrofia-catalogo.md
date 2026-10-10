@@ -1612,3 +1612,14 @@ Consequências:
 
 Configurar o DNS do domínio **sem www** (registro A/ALIAS ou redirecionamento para `www`), senão quem
 digitar `hipertrofialoja.com` continua caindo na página de parqueamento do Hostinger.
+
+## Decisão do usuário (encerramento deste assunto)
+
+"Não fazer nada no projeto." Ou seja: o selo "Build with Enter" fica como está (é da plataforma),
+nada é alterado no código e nada é publicado. Fica registrado apenas como referência:
+
+- Site publicado (com a loja): `www.hipertrofialoja.com`
+- Domínio sem `www`: cai na página de parqueamento do Hostinger (configuração de DNS, fora do projeto)
+- Selo: injetado pela plataforma no HTML servido; no projeto/build/bundle não existe
+- Se um dia quiser removê-lo: configuração/plano de publicação da plataforma, ou hospedar o build
+  estático (`dist/`) fora da plataforma
