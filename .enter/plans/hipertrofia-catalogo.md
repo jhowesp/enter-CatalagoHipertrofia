@@ -1427,3 +1427,64 @@ Levantamento:
 - [ ] Limitação declarada: eu não consigo clicar no botão pela captura de tela. A evidência do claro
       vem da troca temporária do padrão; o clique em si é do `next-themes` (troca de classe) e
       depende da sua conferência.
+
+---
+
+# Banner no celular: mostrar a arte inteira (sem corte)
+
+## Contexto
+
+O banner com só imagem usa `object-cover`, que **preenche a faixa fixa e corta** o que não cabe. Em
+arte promocional isso corta justamente a informação (título, sabores, preço). Você escolheu o
+caminho: **a arte define a altura do banner** — assim nada é cortado e não sobram faixas vazias.
+
+Hoje a altura é fixa por faixa de tela (`h-[300px] sm:h-[380px] lg:h-[440px]`) no
+`src/components/home/hero-carousel.tsx`, e a imagem é posicionada de forma absoluta com
+`object-cover` em `src/components/banner/banner-slide-content.tsx`.
+
+## Mudanças
+
+1. **`src/types/banner.ts`**: nova função `isImageOnlyBanner(banner)` — verdadeira quando há imagem
+   e **não** há selo, título, subtítulo nem botão. Fica junto de `bannerLabel`, para o carrossel e a
+   prévia do painel usarem a mesma regra.
+2. **`banner-slide-content.tsx`**:
+   - banner **só imagem** → a imagem entra no fluxo normal (`w-full h-auto object-contain`), então a
+     altura acompanha a arte. Limite de segurança de altura (`max-h-[70vh]` no celular e
+     `sm:max-h-[560px]`) para uma arte muito alta não virar uma faixa gigante; se o limite for
+     atingido, a arte aparece inteira encaixada (nada cortado).
+   - banner **com texto** → continua como está: altura fixa, imagem ao fundo com `object-cover` e
+     véu escuro, porque ali a imagem é pano de fundo e o texto precisa de contraste.
+3. **`hero-carousel.tsx`**: a moldura do slide deixa de ter altura fixa quando o banner é só imagem
+   (`h-auto`) e mantém a altura atual quando tem texto. Slide com arte menor que o mais alto da lista
+   fica centralizado, e o espaço ao redor usa a superfície de foto (token de tema), então nada
+   parece "quebrado".
+4. **Prévia no painel** (`banner-preview` / formulário): a moldura pequena continua com altura fixa,
+   mas passa a usar `object-contain` no modo só imagem — assim você já vê no painel que a arte
+   inteira aparece.
+
+## Arquivos
+
+- `src/types/banner.ts` (novo helper).
+- `src/components/banner/banner-slide-content.tsx` (imagem no fluxo quando é só arte).
+- `src/components/home/hero-carousel.tsx` (altura da moldura por tipo de banner).
+
+## Checklist de implementação
+
+- [ ] `isImageOnlyBanner` criado em `src/types/banner.ts`.
+- [ ] `BannerSlideContent` com imagem em fluxo normal (`w-full h-auto object-contain`) no modo só
+      imagem, com limite de segurança de altura.
+- [ ] Banner com texto continua com altura fixa, `object-cover` e véu.
+- [ ] `hero-carousel.tsx` usando `h-auto` só para banners de imagem e altura fixa para os de texto.
+- [ ] Prévia do painel mostrando a arte inteira no modo só imagem.
+- [ ] Nenhuma mudança na regra de negócio, na consulta de banners ou nas permissões.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Captura do banner só imagem em `mobile_390`: arte inteira, sem corte.
+- [ ] Captura do mesmo banner em `desktop_1280`: arte inteira, altura coerente com a arte.
+- [ ] Captura de um banner **com texto**: altura fixa preservada, véu e texto legíveis.
+- [ ] Carrossel com os dois tipos juntos mantém os controles (setas/indicadores) funcionando e sem
+      deslocamento estranho.
+- [ ] Estado final do banco de banners igual ao inicial (qualquer desativação temporária para o teste
+      é revertida e conferida por leitura).
