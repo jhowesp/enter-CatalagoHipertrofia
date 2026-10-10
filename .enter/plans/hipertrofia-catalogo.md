@@ -1488,3 +1488,33 @@ Hoje a altura é fixa por faixa de tela (`h-[300px] sm:h-[380px] lg:h-[440px]`) 
       deslocamento estranho.
 - [ ] Estado final do banco de banners igual ao inicial (qualquer desativação temporária para o teste
       é revertida e conferida por leitura).
+
+---
+
+# Investigação: marca "Enter" no site publicado
+
+Você relatou um selo/marca d'água escrito "Enter" no canto do **site publicado**. Investigação feita
+(apenas leitura):
+
+| Verificação | Resultado |
+|---|---|
+| Componentes, HTML e assets do projeto | nenhum selo, nenhuma marca d'água (nada com `watermark`/`badge`) |
+| `src/analytics.ts` | não cria elemento na página |
+| `node_modules/@enter-pro/analytics-sdk` | sem injeção de DOM (sem `createElement`/`appendChild`/`innerHTML`) |
+| `node_modules/vite-plugin-enter-dev` | o único `createElement` injeta um script de preview, não um selo visual |
+| `dist/index.html` (o que vai para o ar) | contém apenas `<div id="root">` e o bundle; **nenhum elemento de selo** |
+
+Conclusão: o selo **não sai do projeto**. Ele é injetado pela **camada de publicação da plataforma** —
+atribuição ligada à forma de publicar (endereço/plano). Consequências:
+
+- Nenhuma alteração de código no projeto remove o selo.
+- Esconder por CSS/JS seria contornar a atribuição da plataforma, e quebraria na próxima publicação —
+  não é uma correção legítima e não foi feita.
+
+Caminhos legítimos: (a) ajustar a opção de publicação/plano na própria plataforma; ou (b) hospedar o
+site em outro lugar, já que `pnpm run build` gera um site estático (`dist/`) que roda em qualquer
+hospedagem — nesse caso o selo da plataforma não existe.
+
+Achado extra, sem relação com o selo: o HTML construído recebe da plataforma uma lista gigante de
+**fontes do Google** (cerca de 20 famílias, incluindo várias que o site não usa). Isso pesa no
+carregamento no celular. Vale investigar em separado se incomodar.
