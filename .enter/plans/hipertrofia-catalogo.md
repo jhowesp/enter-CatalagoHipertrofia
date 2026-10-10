@@ -1331,3 +1331,99 @@ conteúdo: é preciso trocar a **URL**.
       branco.
 - [ ] Você recarrega a home (se aparecer algo antigo, um recarregamento forçado resolve) e confirma
       o quadrado preto.
+
+---
+
+# Modo claro e escuro para o cliente, com botão de fácil acesso
+
+## Contexto
+
+Você quer que o cliente possa alternar entre modo escuro e claro no catálogo, com um botão fácil de
+achar. Hoje o site é **escuro por definição**: os tokens de cor estão em `:root` como escuro e o
+`.dark` só os repete. Ou seja, não existe modo claro — ele precisa ser criado, com contraste
+verificado, e não é só um botão.
+
+Levantamento:
+- `next-themes` **já está instalado** (não precisa dependência nova) e o Tailwind já está configurado
+  com `darkMode: ["class"]`.
+- As superfícies principais (`surface-card`, `bg-gradient-hero`, `bg-gradient-soft`, `bg-card`,
+  `text-foreground`, `border-border`) são **token-based** e se adaptam sozinhas a um tema claro —
+  cerca de 21 arquivos.
+- **12 pontos têm cor fixa escura** (a superfície atrás das fotos de produto: cards, galeria,
+  miniaturas do carrinho, orçamento e painel). Esses ficariam escuros no modo claro e precisam ser
+  centralizados em um token próprio.
+- O `sonner` (avisos) está com tema **fixo** em escuro e precisa seguir a escolha do cliente.
+
+## Decisões
+
+1. **`:root` passa a ser o tema CLARO e `.dark` guarda o escuro.** É a organização correta para
+   alternar por classe, e o escuro continua sendo o **padrão** para quem nunca escolheu.
+2. **O vermelho da marca continua igual nos dois modos**, só em botões e destaques (como você já
+   definiu). Nada de texto ou ícone vermelho no claro.
+3. **A logo mantém o quadrado preto nos dois modos** — a silhueta é branca e depende do fundo escuro.
+4. **O painel administrativo continua sempre escuro**, independente da escolha do cliente: o layout
+   do painel e a tela de login do painel ficam envoltos em uma camada `dark`. Assim o catálogo muda de
+   tema sem deixar o painel com aparência quebrada.
+
+## Mudanças
+
+### 1. Tokens (`src/index.css`)
+- `:root` com os valores claros: fundo branco, texto quase preto, cartões brancos, bordas cinza
+  claro, `muted` cinza suave, `ring` escuro, gradientes (hero, superfície, suave) em tons claros e
+  sombras mais leves.
+- `.dark` recebe **exatamente** os valores escuros atuais (preto/grafite, vermelho, sombras fortes).
+- Novo token de superfície de foto (`--gradient-photo`) e utilitário `.photo-surface`, com versão
+  clara (cinza bem claro) e escura (grafite atual). Substitui os 12 pontos com cor fixa.
+
+### 2. Alternância de tema
+- `src/components/theme-provider.tsx`: provedor sobre o `next-themes` com `attribute="class"`,
+  `defaultTheme="dark"`, `enableSystem={false}` e `disableTransitionOnChange` (evita a transição de
+  cor piscando ao trocar).
+- Script curto no `index.html` que aplica a classe salva **antes** do React renderizar — sem isso, quem
+  escolheu claro veria um piscar escuro ao abrir cada página.
+- `src/App.tsx`: envolver a aplicação com o provedor.
+- `src/components/theme-toggle.tsx`: botão com sol/lua (ícones lucide), com rótulo de acessibilidade
+  descrevendo a ação ("Ativar modo claro" / "Ativar modo escuro").
+- **Onde fica**: no cabeçalho do site, ao lado dos botões de WhatsApp e orçamento (desktop) e como
+  linha simples no menu do celular. O cabeçalho está em todas as páginas, então fica sempre à mão.
+- `src/components/ui/sonner.tsx`: passar a seguir o tema atual em vez de fixar escuro.
+
+### 3. Superfícies de foto
+- Trocar as 12 ocorrências de `bg-[radial-gradient(...)]` por `.photo-surface`:
+  `product-card.tsx`, `product-image.tsx`, `cart-drawer.tsx`, `Produto.tsx` (2 pontos),
+  `Orcamento.tsx`, `product-image-gallery.tsx`, `banner-form-sheet.tsx`, `products-table.tsx` e
+  `hero.tsx` (cartão de contato).
+
+## Arquivos
+
+- `src/index.css`, `index.html`, `src/App.tsx` (tema e tokens).
+- Novos: `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`.
+- Alterados: `src/components/layout/site-header.tsx` (botão + menu mobile),
+  `src/components/ui/sonner.tsx`, `src/admin/layout/admin-shell.tsx` e `src/pages/admin/AdminLogin.tsx`
+  (camada `dark` fixa), e os 12 pontos de superfície listados acima.
+
+## Checklist de implementação
+
+- [ ] `:root` convertido para o tema claro e `.dark` com os valores escuros atuais.
+- [ ] Token `--gradient-photo` e utilitário `.photo-surface` nos dois modos.
+- [ ] As 12 ocorrências de gradiente fixo substituídas por `.photo-surface`.
+- [ ] Provedor de tema registrado em `App.tsx` com padrão escuro.
+- [ ] Script no `index.html` aplicando o tema salvo antes da renderização.
+- [ ] Botão de tema no cabeçalho (desktop) e no menu do celular, com rótulo acessível.
+- [ ] Avisos (sonner) seguindo o tema escolhido.
+- [ ] Painel e login do painel travados no escuro.
+- [ ] Nenhum vermelho novo em texto/ícone; vermelho apenas em botões e destaques nos dois modos.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Captura com o padrão **escuro** inalterado (home em 390 e 1280).
+- [ ] Captura em **modo claro** da home, do catálogo e da página do produto, em `mobile_390` e
+      `desktop_1280` — feita alternando temporariamente o tema padrão para claro, capturando e
+      **devolvendo o padrão para escuro** em seguida.
+- [ ] Legibilidade conferida nas capturas claras: texto sobre fundo, preço, selo de desconto, botões
+      e superfície das fotos de produto.
+- [ ] Estado final: tema padrão escuro e nenhuma classe temporária no código.
+- [ ] Limitação declarada: eu não consigo clicar no botão pela captura de tela. A evidência do claro
+      vem da troca temporária do padrão; o clique em si é do `next-themes` (troca de classe) e
+      depende da sua conferência.
