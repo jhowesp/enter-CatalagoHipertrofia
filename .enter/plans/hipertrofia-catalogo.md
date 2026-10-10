@@ -1561,3 +1561,54 @@ plataforma publica o site**, não nesse domínio.
 
 Pendência: confirmar o endereço exato em que o selo aparece (o site publicado da plataforma), porque
 o domínio informado não aponta para a loja.
+
+---
+
+# Selo "Build with Enter" — conclusão com prova (domínio correto)
+
+## Primeiro: o endereço certo
+
+| Endereço | IP | Resposta |
+|---|---|---|
+| `https://www.hipertrofialoja.com` | 172.66.47.125 (Cloudflare) | **a loja** — "HIPERTROFIA SUPLEMENTOS \| ..." |
+| `https://hipertrofialoja.com` (sem www) | 2.57.91.91 | página de domínio parado do Hostinger |
+
+O domínio **sem `www` não está configurado**: quem digita `hipertrofialoja.com` cai na página de
+parqueamento. O site está publicado em `www`.
+
+## Onde o selo está (evidência)
+
+| Verificação | Resultado |
+|---|---|
+| Código do projeto | 0 ocorrências de `Build with Enter` e de `enter-badge` |
+| `dist/index.html` (build local) | **0** ocorrências de `enter-badge` |
+| Bundles locais (`dist/assets/*.js`) | **0** ocorrências |
+| **Bundle publicado** (`/assets/index-DUd3hFkK.js`, 1,1 MB) | **0** ocorrências |
+| **HTML servido em `www.hipertrofialoja.com`** | **contém** `<style>#enter-badge{ z-index:10000000000; position:fixed; bottom:1.33em; right:1.33em; ...}` e os ids `enter-badge` e `enter-badge-close` |
+
+O HTML servido também traz um script inline (que **não existe** no projeto) que:
+
+- **esconde o selo quando a página está dentro de iframe ou é um navegador automatizado**
+  (`window.self !== window.top || navigator.userAgent.includes("puppeteer")`);
+- liga o botão **fechar** do selo (`enter-badge-close`).
+
+## Conclusão
+
+O selo **não sai do projeto nem do build**: ele é **injetado pela camada de publicação da plataforma**
+no HTML servido. É por isso que ele aparece no site publicado e não no preview (a plataforma o esconde
+dentro do iframe de preview de propósito).
+
+Consequências:
+
+- Nenhuma alteração de código no projeto remove o selo — e não foi feita nenhuma.
+- Esconder por CSS/JS seria contornar a atribuição da plataforma; não fiz e não farei.
+- O selo tem **botão de fechar** próprio, e a remoção oficial depende da configuração/plano de
+  publicação da plataforma — não tenho visibilidade nem ferramenta para isso, e não vou inventar qual
+  opção é.
+- Caminho alternativo legítimo: hospedar o build estático (`dist/`) em outro serviço; nesse caso o selo
+  da plataforma não existe.
+
+## Pendência separada e relevante
+
+Configurar o DNS do domínio **sem www** (registro A/ALIAS ou redirecionamento para `www`), senão quem
+digitar `hipertrofialoja.com` continua caindo na página de parqueamento do Hostinger.
