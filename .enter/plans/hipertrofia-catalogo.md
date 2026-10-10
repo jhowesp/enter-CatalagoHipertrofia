@@ -1518,3 +1518,46 @@ hospedagem — nesse caso o selo da plataforma não existe.
 Achado extra, sem relação com o selo: o HTML construído recebe da plataforma uma lista gigante de
 **fontes do Google** (cerca de 20 famílias, incluindo várias que o site não usa). Isso pesa no
 carregamento no celular. Vale investigar em separado se incomodar.
+
+---
+
+# Selo "Build with Enter" no site publicado — investigação conclusiva
+
+## O que foi verificado
+
+| Onde procurei | Resultado |
+|---|---|
+| Código do projeto (`src`, `public`, `index.html`) | **não existe** "Build with Enter" |
+| Build de produção local (`dist/`, bundle + HTML) | **não existe** |
+| Pacotes da plataforma no projeto (`@enter-pro/analytics-sdk`, `vite-plugin-enter-dev`) | **não existe** |
+| HTML do site publicado em `https://hipertrofialoja.com/` | HTTP 200, **sem** o texto do selo |
+| Bundle JS publicado | não foi possível analisar: o endereço não serve o site (ver abaixo) |
+
+## Achado que muda o diagnóstico
+
+`https://hipertrofialoja.com/` **não está servindo a loja**. O que responde nesse endereço é uma
+**página de domínio parado do Hostinger**:
+
+```
+<title>Parked Domain name on Hostinger DNS system</title>
+```
+
+Detalhes que confirmam: zero ocorrências de "HIPERTROFIA" na página, nenhum `id="root"`, nenhum
+bundle do app; no lugar disso há um widget de busca/registro de domínio (com implementação de
+Punycode) e um script de Google Analytics antigo (`UA-26575989-44`).
+
+Ou seja: o domínio próprio **não está apontando para o site** — o DNS dele responde pela página de
+parqueamento do Hostinger. O `Build with Enter` que você vê deve estar no **endereço em que a
+plataforma publica o site**, não nesse domínio.
+
+## Conclusão sobre o selo
+
+- No **repositório e no build** não há selo nenhum. Isso está comprovado.
+- Portanto, se ele aparece na página publicada, é **injetado pela camada de publicação da
+  plataforma** (fora do projeto e do build).
+- Nenhuma alteração de código no projeto remove o selo, e eu não vou escondê-lo por CSS/JS: isso
+  contornaria a atribuição e quebraria na próxima publicação.
+- A remoção, se existir, é por **configuração/plano de publicação da plataforma** — não por código.
+
+Pendência: confirmar o endereço exato em que o selo aparece (o site publicado da plataforma), porque
+o domínio informado não aponta para a loja.
