@@ -1759,3 +1759,62 @@ central.
 O usuário cancelou a escolha do padrão. Nada foi alterado no código. Se ele escolher a opção de duas
 artes, o plano é: coluna nova `image_url_mobile` em `banners`, upload extra no formulário do painel, e
 `<picture>` com `media` no slide (celular usa a arte quadrada, desktop a 3:1).
+
+---
+
+# Envio do orçamento para o WhatsApp da loja sem o cliente apertar nada
+
+## Contexto e o limite real do WhatsApp
+
+O que você quer: o cliente finaliza e o pedido **já vai** para o WhatsApp da loja, sem apertar botão.
+
+Estado atual (verificado no código): ao enviar, a aba do WhatsApp é aberta **automaticamente de forma
+síncrona** (antes de qualquer espera, para o navegador não bloquear) e navegada para
+`wa.me/<número>?text=<mensagem>` com tudo pronto. **Isso já funciona** — o bug da aba branca era o
+`noopener`, corrigido.
+
+**O limite:** o link `wa.me` sempre abre a tela de **compor** a mensagem com o texto preenchido. Ele
+**não envia sozinho** — apertar o "enviar" dentro do WhatsApp é decisão do WhatsApp (proteção contra
+spam), e não existe parâmetro que faça o envio automático. Portanto, "zero toques de ponta a ponta" só
+é possível pela **API oficial do WhatsApp Business** (envio pelo servidor).
+
+## Parte A — melhorias que eu faço agora (sem depender de credencial)
+
+1. **Deixar claro na tela de sucesso** que a mensagem já está aberta e que basta tocar em **enviar**
+   dentro do WhatsApp. Hoje o texto diz apenas "abrimos a conversa no WhatsApp".
+2. **Tirar o botão "Abrir conversa no WhatsApp" quando a aba abriu com sucesso** — ele dá a impressão
+   de que falta um passo. O botão continua existindo **apenas** no caso em que o navegador bloqueou a
+   aba (aí é a saída, não um passo extra).
+3. Manter a abertura síncrona da aba (já está correta) e fechar a aba reservada quando algo falha
+   antes de enviar (já está correto).
+
+## Parte B — envio automático de verdade (depende de você)
+
+Fluxo: o cliente finaliza → **o servidor** envia o orçamento direto para o número da loja → o cliente
+não aperta nada e nem precisa estar com o WhatsApp aberto.
+
+O que é necessário:
+- conta **WhatsApp Business** com o número da loja registrado na **API oficial (Cloud API)** da Meta;
+- um **token de acesso permanente** e o **ID do número** (`phone_number_id`);
+- eu guardo o token pelo formulário seguro de segredos (nunca no chat, nunca no código) e publico uma
+  **função de backend** que fala com a API da Meta; o painel continua salvando o orçamento como hoje.
+
+Ressalvas honestas: mensagens iniciadas pela empresa fora da janela de 24h costumam exigir um
+**template aprovado**; valem as políticas e a cobrança da Meta; e a mensagem chega **no próprio número
+da loja** (a loja "conversa consigo mesma"), que é exatamente o objetivo.
+
+## Checklist da Parte A
+
+- [ ] Texto da tela de sucesso explicando que a mensagem já está no WhatsApp e basta tocar em enviar.
+- [ ] Botão de abrir conversa visível **somente** quando a aba foi bloqueada.
+- [ ] Abertura automática da aba mantida antes de qualquer espera.
+- [ ] Nenhuma mudança em catálogo, carrinho, painel, tema ou banco.
+
+## Verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Link do WhatsApp conferido por requisição: `wa.me/<número>?text=...` responde 302 levando a
+      mensagem completa.
+- [ ] Limitação declarada: a tela de sucesso só aparece com itens no carrinho (estado do navegador do
+      cliente), então eu não consigo capturá-la; a conferência visual é sua.
+- [ ] Parte B só começa depois da sua decisão e do token configurado pelo formulário seguro.
