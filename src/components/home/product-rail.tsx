@@ -1,3 +1,4 @@
+import { LoadError } from "@/components/catalog/load-error";
 import { ProductCard } from "@/components/catalog/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,9 @@ type ProductRailProps = {
   products: CatalogProduct[];
   onAdd: (product: CatalogProduct) => void;
   loading?: boolean;
+  /** Falha ao carregar (diferente de não haver resultado). */
+  error?: boolean;
+  onRetry?: () => void;
   skeletonCount?: number;
   className?: string;
 };
@@ -19,6 +23,8 @@ export function ProductRail({
   products,
   onAdd,
   loading = false,
+  error = false,
+  onRetry,
   skeletonCount = 4,
   className,
 }: ProductRailProps) {
@@ -40,6 +46,10 @@ export function ProductRail({
         ))}
       </div>
     );
+  }
+
+  if (error && !loading) {
+    return <LoadError onRetry={onRetry} className={className} />;
   }
 
   if (products.length === 0) return null;

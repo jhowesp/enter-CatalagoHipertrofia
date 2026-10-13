@@ -1,5 +1,6 @@
 import { PackageSearch } from "lucide-react";
 
+import { LoadError } from "@/components/catalog/load-error";
 import { ProductCard } from "@/components/catalog/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -9,6 +10,9 @@ type ProductGridProps = {
   products: CatalogProduct[];
   onAdd: (product: CatalogProduct) => void;
   loading?: boolean;
+  /** Falha ao carregar (diferente de não haver resultado). */
+  error?: boolean;
+  onRetry?: () => void;
   skeletonCount?: number;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -19,6 +23,8 @@ export function ProductGrid({
   products,
   onAdd,
   loading = false,
+  error = false,
+  onRetry,
   skeletonCount = 8,
   emptyTitle = "Nenhum produto encontrado",
   emptyDescription = "Tente outra busca ou remova os filtros aplicados.",
@@ -48,6 +54,10 @@ export function ProductGrid({
         ))}
       </div>
     );
+  }
+
+  if (error && !loading) {
+    return <LoadError onRetry={onRetry} />;
   }
 
   if (products.length === 0) {

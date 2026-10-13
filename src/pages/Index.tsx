@@ -23,12 +23,22 @@ import { listActiveBanners } from "@/services/banners";
 const Home = () => {
   const addToQuote = useAddToQuote();
 
-  const { data: featured = [], isLoading: loadingFeatured } = useQuery({
+  const {
+    data: featured = [],
+    isLoading: loadingFeatured,
+    isError: featuredError,
+    refetch: refetchFeatured,
+  } = useQuery({
     queryKey: ["products", "featured"],
     queryFn: () => listFeaturedProducts(8),
   });
 
-  const { data: offers = [], isLoading: loadingOffers } = useQuery({
+  const {
+    data: offers = [],
+    isLoading: loadingOffers,
+    isError: offersError,
+    refetch: refetchOffers,
+  } = useQuery({
     queryKey: ["products", "offers"],
     queryFn: () => listOfferProducts(4),
   });
@@ -90,10 +100,12 @@ const Home = () => {
             products={featured}
             onAdd={addToQuote}
             loading={loadingFeatured}
+            error={featuredError}
+            onRetry={() => void refetchFeatured()}
           />
         </section>
 
-        {(loadingOffers || offers.length > 0) && (
+        {(loadingOffers || offers.length > 0 || offersError) && (
           <section>
             <SectionHeading
               title="Ofertas"
@@ -101,7 +113,13 @@ const Home = () => {
               href="/catalogo?ordem=discount"
               linkLabel="Ver todas as ofertas"
             />
-            <ProductRail products={offers} onAdd={addToQuote} loading={loadingOffers} />
+            <ProductRail
+              products={offers}
+              onAdd={addToQuote}
+              loading={loadingOffers}
+              error={offersError}
+              onRetry={() => void refetchOffers()}
+            />
           </section>
         )}
 

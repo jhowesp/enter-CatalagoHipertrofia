@@ -12,7 +12,10 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 60 * 1000,
       refetchOnWindowFocus: false,
-      retry: 1,
+      // O backend pode estar acordando (hibernação por inatividade): a primeira
+      // tentativa pode falhar na rede. Tentamos de novo com espera crescente.
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     },
   },
 });

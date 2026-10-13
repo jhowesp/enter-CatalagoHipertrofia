@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Boxes, Check, MessageCircle, PackageX, ShoppingCart, Tag } from "lucide-react";
 
 import { ProductGrid } from "@/components/catalog/product-grid";
+import { LoadError } from "@/components/catalog/load-error";
 import { DiscountBadge } from "@/components/catalog/discount-badge";
 import { PriceBlock } from "@/components/catalog/price-block";
 import { ProductImage } from "@/components/catalog/product-image";
@@ -26,7 +27,12 @@ const Produto = () => {
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
 
-  const { data: product, isLoading } = useQuery({
+  const {
+    data: product,
+    isLoading,
+    isError: productError,
+    refetch: refetchProduct,
+  } = useQuery({
     queryKey: ["product", slug],
     queryFn: () => getProductBySlug(slug),
     enabled: Boolean(slug),
@@ -101,6 +107,26 @@ const Produto = () => {
               <div className="h-8 w-32 animate-pulse rounded bg-card" />
               <div className="h-24 w-full animate-pulse rounded bg-card" />
             </div>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
+  // Falha de carregamento é diferente de "produto não existe".
+  if (productError) {
+    return (
+      <PageShell>
+        <div className="container py-16">
+          <LoadError
+            onRetry={() => void refetchProduct()}
+            title="Não conseguimos carregar este produto agora"
+            description="Pode ser a sua conexão ou uma instabilidade momentânea. Tente de novo ou volte ao catálogo."
+          />
+          <div className="mt-6 flex justify-center">
+            <Button variant="outline" size="xl" asChild>
+              <Link to="/catalogo">Voltar ao catálogo</Link>
+            </Button>
           </div>
         </div>
       </PageShell>

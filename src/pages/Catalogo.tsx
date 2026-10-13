@@ -71,7 +71,7 @@ const Catalogo = () => {
 
   const pageSize = CATALOG_PAGE_SIZE * pagesLoaded;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["catalog", urlSearch, categorySlug, brandSlug, sort, pageSize],
     queryFn: () =>
       listProducts({
@@ -175,6 +175,8 @@ const Catalogo = () => {
               products={products}
               onAdd={addToQuote}
               loading={isLoading}
+              error={isError}
+              onRetry={() => void refetch()}
               emptyTitle="Nenhum produto encontrado"
               emptyDescription="Ajuste a busca ou remova os filtros para ver mais opções."
             />
