@@ -1818,3 +1818,71 @@ da loja** (a loja "conversa consigo mesma"), que é exatamente o objetivo.
 - [ ] Limitação declarada: a tela de sucesso só aparece com itens no carrinho (estado do navegador do
       cliente), então eu não consigo capturá-la; a conferência visual é sua.
 - [ ] Parte B só começa depois da sua decisão e do token configurado pelo formulário seguro.
+
+---
+
+# "Os produtos não estão carregando" — diagnóstico e correção da experiência de falha
+
+## Diagnóstico (com prova)
+
+1. **Requisições do app** (registro de rede do preview):
+
+| Horário | Requisição | Resultado |
+|---|---|---|
+| 15:02 / 15:03 | `GET /rest/v1/public_products` (busca dos produtos) | **Status 0 — "Failed to fetch"** — falha de rede, não chegou a responder |
+| 17:08 | as mesmas buscas | **Status 200**, com 8,6 KB e 17 KB de dados |
+
+2. **Leitura direta no banco agora**: `instance is paused: instance status is resuming, please resume
+   first` → a **instância do backend estava pausada** (hibernação por inatividade) e está retomando.
+
+**Conclusão**: o catálogo apareceu vazio porque o **backend estava dormindo** e as consultas falharam na
+rede. Não é regressão do código — as buscas que falharam são as mesmas que depois responderam 200 — e
+não tem relação com as mudanças recentes (lazy do painel, separação de blocos). O primeiro acesso
+depois de um período ocioso também ficou lento: os 200 levaram ~1,1 s (tempo de acordar).
+
+## Problema real de código encontrado (e que vou corrigir)
+
+Quando a consulta **falha**, o app hoje mostra "**Nenhum produto encontrado**" — como se o catálogo
+estivesse vazio. Isso é enganoso: foi o que fez a falha parecer catálogo vazio em vez de instabilidade.
+E a configuração de tentativas é `retry: 1`, curta demais para cobrir o tempo de acordar (~1,1 s).
+
+Correções:
+
+1. **Distinguir falha de vazio** no catálogo: em erro, mostrar "Não conseguimos carregar os produtos
+   agora. Verifique sua conexão." com botão **"Tentar de novo"** (aciona `refetch`), em vez do estado
+   vazio. O estado vazio de verdade continua existindo quando a busca não tem resultado.
+2. **Tentar mais de uma vez com espera** (`retry: 2` e atraso crescente no cliente do React Query),
+   para o primeiro acesso depois da hibernação não cair em erro.
+3. Mesmo tratamento na **home** (as vitrines "Mais vendidos" e "Ofertas") e na **página do produto**:
+   erro de rede não deve parecer "produto não encontrado".
+
+Nada muda na consulta em si, no banco, no catálogo, no carrinho, no painel ou no tema.
+
+## Arquivos
+
+- `src/App.tsx` (política de tentativas do React Query).
+- `src/pages/Catalogo.tsx` (estado de erro com botão de tentar de novo).
+- `src/pages/Index.tsx` (vitrines tratando erro).
+- `src/pages/Produto.tsx` (erro diferente de "não encontrado").
+- `src/components/catalog/product-grid.tsx` (estado de erro reutilizável, com ação).
+
+## Checklist de implementação
+
+- [ ] `retry: 2` com atraso crescente no cliente do React Query.
+- [ ] `ProductGrid` com estado de **erro** (mensagem + botão "Tentar de novo"), separado do vazio.
+- [ ] `/catalogo` usando o estado de erro quando a consulta falha e o vazio só quando não há resultado.
+- [ ] Home: vitrines com falha mostram aviso de erro, não lista vazia.
+- [ ] Página do produto: falha de rede não exibe "produto não encontrado".
+- [ ] Nenhuma alteração na consulta, no banco, no painel, no carrinho ou no tema.
+
+## Checklist de verificação
+
+- [ ] `pnpm lint`, `pnpm exec tsc --noEmit` e `pnpm run build` sem erros.
+- [ ] Caminho normal: captura do catálogo com os produtos carregados (quando a instância estiver
+      acordada) em `desktop_1280`.
+- [ ] Estado de erro conferido de verdade: aponto temporariamente o cliente para um endereço inválido,
+      capturo a tela do catálogo mostrando "Não conseguimos carregar" com o botão de tentar de novo e
+      **devolvo o endereço correto** em seguida, confirmando no arquivo.
+- [ ] Confirmação final de que a instância respondeu de novo (leitura no banco com dados).
+- [ ] Limitação declarada: eu não controlo a hibernação da instância; o que o código garante é não
+      parecer "catálogo vazio" e tentar novamente.
