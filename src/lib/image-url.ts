@@ -1,18 +1,37 @@
 /**
- * Converte URLs diretas do Supabase Storage para a rota de proxy com cache da Vercel Edge CDN (/supabase-storage/...).
- * Isso permite que a CDN da Vercel em São Paulo guarde as fotos em cache local por até 30 dias,
- * eliminando a latência de cruzar os cabos submarinos até Singapura (~4.7s -> ~20ms).
+ * Otimiza e acelera fotos de produtos e banners usando a CDN global wsrv.nl (Cloudflare Edge).
+ * - Converte arquivos pesados PNG/JPG (que chegam a ter 3 MB) para WebP (~25 KB - 150 KB)
+ * - Redimensiona para a resolução ideal da tela
+ * - Entrega a partir de servidores Edge no Brasil em ~0.15s em vez de puxar da Ásia em ~5s
  */
-export function optimizeImageUrl(url: string | null | undefined): string | null {
+export type OptimizeImageOptions = {
+  width?: number;
+  quality?: number;
+};
+
+export function optimizeImageUrl(
+  url: string | null | undefined,
+  options: OptimizeImageOptions = {},
+): string | null {
   if (!url || typeof url !== "string") return null;
 
-  const SUPABASE_STORAGE_PREFIX =
-    "https://spb-t4n3zw7otj123173.supabase.opentrust.net/storage/v1/object/public/";
-
-  if (url.startsWith(SUPABASE_STORAGE_PREFIX)) {
-    return `/supabase-storage/${url.slice(SUPABASE_STORAGE_PREFIX.length)}`;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    return trimmed;
   }
 
-  return url;
-}
+  // Já é uma URL otimizada do wsrv.nl
+  if (trimmed.includes("wsrv.nl")) {
+    return trimmed;
+  }
 
+  // Remove eventuais query params antigos
+  const cleanUrl = trimmed.split("?")[0];
+
+  // Banners usam resolução maior (1440px), produtos usam 600px
+  const isBanner = cleanUrl.includes("/banners/") || cleanUrl.includes("/banner-images/");
+  const width = options.width ?? (isBanner ? 1440 : 600);
+  const quality = options.quality ?? 82;
+
+  return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&w=${width}&output=webp&q=${quality}&we=1`;
+}
