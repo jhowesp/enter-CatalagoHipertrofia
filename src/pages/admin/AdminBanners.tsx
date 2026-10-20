@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Loader2, Monitor, Pencil, Plus, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { BannerFormSheet } from "@/admin/components/banner-form-sheet";
@@ -163,6 +163,7 @@ const AdminBanners = () => {
                   title: banner.title,
                   subtitle: banner.subtitle,
                   imageUrl: banner.imageUrl,
+                  mobileImageUrl: banner.mobileImageUrl,
                   ctaLabel: banner.ctaLabel,
                 }}
                 className="h-[132px]"
@@ -184,10 +185,22 @@ const AdminBanners = () => {
                         {banner.eyebrow}
                       </p>
                     )}
-                    <p className="truncate text-xs text-muted-foreground">
-                      {banner.ctaLabel ? `${banner.ctaLabel} → ` : "Sem botão"}
-                      {banner.ctaHref ?? ""}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      {banner.imageUrl && (
+                        <Badge variant="outline" className="gap-1 text-[10px] font-normal">
+                          <Monitor className="h-3 w-3 text-primary" /> Desktop
+                        </Badge>
+                      )}
+                      {banner.mobileImageUrl ? (
+                        <Badge variant="outline" className="gap-1 text-[10px] font-normal border-emerald-500/30 text-emerald-500">
+                          <Smartphone className="h-3 w-3" /> Mobile
+                        </Badge>
+                      ) : banner.imageUrl ? (
+                        <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
+                          Mobile: adaptação
+                        </Badge>
+                      ) : null}
+                    </div>
                   </div>
 
                   <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
