@@ -111,6 +111,9 @@ const AdminProdutos = () => {
     void queryClient.invalidateQueries({ queryKey: ["admin-low-stock"] });
     void queryClient.invalidateQueries({ queryKey: ["admin-banners"] });
     void queryClient.invalidateQueries({ queryKey: ["banners", "active"] });
+    void queryClient.invalidateQueries({ queryKey: ["products"] });
+    void queryClient.invalidateQueries({ queryKey: ["categories"] });
+    void queryClient.invalidateQueries({ queryKey: ["brands"] });
   };
 
   const resetPaging = () => setPagesLoaded(1);

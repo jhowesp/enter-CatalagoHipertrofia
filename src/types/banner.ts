@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import { optimizeImageUrl } from "@/lib/image-url";
 
 export type BannerRow = Database["public"]["Tables"]["banners"]["Row"];
 
@@ -35,7 +36,7 @@ export function mapBanner(row: BannerRow): Banner {
     eyebrow: row.eyebrow?.trim() ? row.eyebrow.trim() : null,
     title: row.title?.trim() ? row.title.trim() : null,
     subtitle: row.subtitle?.trim() ? row.subtitle.trim() : null,
-    imageUrl: row.image_url,
+    imageUrl: optimizeImageUrl(row.image_url),
     ctaLabel: row.cta_label?.trim() ? row.cta_label.trim() : null,
     ctaHref: row.cta_href?.trim() ? row.cta_href.trim() : null,
     active: row.active,

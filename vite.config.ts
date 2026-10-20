@@ -14,6 +14,13 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      proxy: {
+        "/supabase-storage": {
+          target: "https://spb-t4n3zw7otj123173.supabase.opentrust.net/storage/v1/object/public",
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/supabase-storage/, ""),
+        },
+      },
     },
     plugins: plugins.filter(Boolean) as PluginOption[],
     resolve: {
