@@ -1,6 +1,15 @@
 {
   "headers": [
     {
+      "source": "/supabase-storage/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, s-maxage=2592000, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
@@ -27,6 +36,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/supabase-storage/:path*",
+      "destination": "https://spb-t4n3zw7otj123173.supabase.opentrust.net/storage/v1/object/public/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

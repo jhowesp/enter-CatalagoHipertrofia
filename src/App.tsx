@@ -10,10 +10,10 @@ import { routers } from "./router";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
       refetchOnWindowFocus: false,
-      // O backend pode estar acordando (hibernação por inatividade): a primeira
-      // tentativa pode falhar na rede. Tentamos de novo com espera crescente.
+      refetchOnMount: false,
       retry: 2,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     },

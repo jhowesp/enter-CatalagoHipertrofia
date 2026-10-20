@@ -1,5 +1,6 @@
 import { ImageOff } from "lucide-react";
 
+import { optimizeImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 
 type ProductImageProps = {
@@ -35,9 +36,11 @@ export function ProductImage({ src, alt, priority = false, className }: ProductI
     );
   }
 
+  const finalSrc = optimizeImageUrl(src) ?? src;
+
   return (
     <img
-      src={src}
+      src={finalSrc}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       decoding="async"

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { optimizeImageUrl } from "@/lib/image-url";
 import {
   normalizeImages,
   normalizeSpecs,
@@ -41,11 +42,12 @@ function mapProduct(row: PublicProductRow): CatalogProduct {
     salePrice,
     effectivePrice: Number(row.effective_price ?? salePrice ?? price),
     discountPercent: Number(row.discount_percent ?? 0),
-    imageUrl: row.image_url ?? null,
+    imageUrl: optimizeImageUrl(row.image_url),
     images: (() => {
-      const gallery = normalizeImages(row.images);
+      const gallery = normalizeImages(row.images).map((img) => optimizeImageUrl(img) ?? img);
       if (gallery.length > 0) return gallery;
-      return row.image_url ? [row.image_url] : [];
+      const single = optimizeImageUrl(row.image_url);
+      return single ? [single] : [];
     })(),
     stock: Number(row.stock ?? 0),
     featured: Boolean(row.featured),

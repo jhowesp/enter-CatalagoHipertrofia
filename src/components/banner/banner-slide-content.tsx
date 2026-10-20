@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
+import { optimizeImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 
 export type BannerSlideData = {
@@ -32,7 +33,9 @@ export function BannerSlideContent({
   showCta = true,
   className,
 }: BannerSlideContentProps) {
-  const hasImage = Boolean(data.imageUrl);
+  const rawImageUrl = data.imageUrl;
+  const optimizedImageUrl = optimizeImageUrl(rawImageUrl);
+  const hasImage = Boolean(rawImageUrl);
   const hasText = Boolean(data.eyebrow || data.title || data.subtitle);
   const hasCta = showCta && Boolean(data.ctaLabel);
   const imageOnly = hasImage && !hasText && !hasCta;
@@ -50,7 +53,7 @@ export function BannerSlideContent({
           /* Só arte: a imagem fica no fluxo, então a altura acompanha e nada é cortado.
              O limite de segurança evita que uma arte muito alta domine a tela. */
           <img
-            src={data.imageUrl as string}
+            src={optimizedImageUrl ?? (rawImageUrl as string)}
             alt=""
             loading={priority ? "eager" : "lazy"}
             decoding="async"
@@ -59,7 +62,7 @@ export function BannerSlideContent({
         ) : (
           <>
             <img
-              src={data.imageUrl as string}
+              src={optimizedImageUrl ?? (rawImageUrl as string)}
               alt=""
               loading={priority ? "eager" : "lazy"}
               decoding="async"
