@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { mapBanner, type Banner, type BannerInput } from "@/types/banner";
+import { mapBanner, serializeBannerImages, type Banner, type BannerInput } from "@/types/banner";
 
 /** Banners que a home deve exibir (só ativos), na ordem definida no painel. */
 export async function listActiveBanners(): Promise<Banner[]> {
@@ -26,13 +26,14 @@ export async function listAdminBanners(): Promise<Banner[]> {
 }
 
 export async function createBanner(input: BannerInput, position: number): Promise<Banner> {
+  const rawImageUrl = serializeBannerImages(input.imageUrl, input.mobileImageUrl);
   const { data, error } = await supabase
     .from("banners")
     .insert({
       eyebrow: input.eyebrow,
       title: input.title,
       subtitle: input.subtitle,
-      image_url: input.imageUrl,
+      image_url: rawImageUrl,
       cta_label: input.ctaLabel,
       cta_href: input.ctaHref,
       active: input.active,
@@ -47,13 +48,14 @@ export async function createBanner(input: BannerInput, position: number): Promis
 }
 
 export async function updateBanner(id: string, input: BannerInput): Promise<Banner> {
+  const rawImageUrl = serializeBannerImages(input.imageUrl, input.mobileImageUrl);
   const { data, error } = await supabase
     .from("banners")
     .update({
       eyebrow: input.eyebrow,
       title: input.title,
       subtitle: input.subtitle,
-      image_url: input.imageUrl,
+      image_url: rawImageUrl,
       cta_label: input.ctaLabel,
       cta_href: input.ctaHref,
       active: input.active,

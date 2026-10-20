@@ -157,6 +157,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
                         title: banner.title,
                         subtitle: banner.subtitle,
                         imageUrl: banner.imageUrl,
+                        mobileImageUrl: banner.mobileImageUrl,
                         ctaLabel: banner.ctaLabel,
                       }}
                       priority={index === 0}

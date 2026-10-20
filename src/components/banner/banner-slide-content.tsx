@@ -8,6 +8,7 @@ export type BannerSlideData = {
   title?: string | null;
   subtitle?: string | null;
   imageUrl?: string | null;
+  mobileImageUrl?: string | null;
   ctaLabel?: string | null;
 };
 
@@ -33,9 +34,12 @@ export function BannerSlideContent({
   showCta = true,
   className,
 }: BannerSlideContentProps) {
-  const rawImageUrl = data.imageUrl;
-  const optimizedImageUrl = optimizeImageUrl(rawImageUrl);
-  const hasImage = Boolean(rawImageUrl);
+  const rawDesktopUrl = data.imageUrl;
+  const rawMobileUrl = data.mobileImageUrl;
+  const optimizedDesktopUrl = optimizeImageUrl(rawDesktopUrl);
+  const optimizedMobileUrl = optimizeImageUrl(rawMobileUrl);
+
+  const hasImage = Boolean(rawDesktopUrl || rawMobileUrl);
   const hasText = Boolean(data.eyebrow || data.title || data.subtitle);
   const hasCta = showCta && Boolean(data.ctaLabel);
   const imageOnly = hasImage && !hasText && !hasCta;
@@ -52,22 +56,32 @@ export function BannerSlideContent({
         imageOnly ? (
           /* Só arte: a imagem fica no fluxo, então a altura acompanha e nada é cortado.
              O limite de segurança evita que uma arte muito alta domine a tela. */
-          <img
-            src={optimizedImageUrl ?? (rawImageUrl as string)}
-            alt=""
-            loading={priority ? "eager" : "lazy"}
-            decoding="async"
-            className="h-auto max-h-[70vh] w-full object-contain sm:max-h-[560px]"
-          />
-        ) : (
-          <>
+          <picture className="block w-full">
+            {optimizedMobileUrl && (
+              <source media="(max-width: 640px)" srcSet={optimizedMobileUrl} />
+            )}
             <img
-              src={optimizedImageUrl ?? (rawImageUrl as string)}
+              src={optimizedDesktopUrl ?? (optimizedMobileUrl || (rawDesktopUrl as string))}
               alt=""
               loading={priority ? "eager" : "lazy"}
               decoding="async"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="h-auto max-h-[70vh] w-full object-contain sm:max-h-[560px]"
             />
+          </picture>
+        ) : (
+          <>
+            <picture className="absolute inset-0 block h-full w-full">
+              {optimizedMobileUrl && (
+                <source media="(max-width: 640px)" srcSet={optimizedMobileUrl} />
+              )}
+              <img
+                src={optimizedDesktopUrl ?? (optimizedMobileUrl || (rawDesktopUrl as string))}
+                alt=""
+                loading={priority ? "eager" : "lazy"}
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+            </picture>
             <div
               aria-hidden
               className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/35"
