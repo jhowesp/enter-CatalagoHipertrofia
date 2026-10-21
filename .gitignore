@@ -24,3 +24,9 @@ reports
 *.sln
 *.sw?
 code_template.zip
+
+# Python & Processing artifacts
+.venv/
+.u2net/
+processed_products/
+
