@@ -18,9 +18,17 @@ export function validateImageFile(file: File): string | null {
   return null;
 }
 
-/** Reduz e converte imagens para WebP no navegador antes de subir para o Supabase. */
-async function compressImage(file: File, maxWidth = 1440, quality = 0.85): Promise<File> {
+/**
+ * Reduz e converte imagens para WebP no navegador antes de subir para o Supabase.
+ * Garante que banners e produtos nunca excedam resoluções e pesos excessivos no banco.
+ */
+async function compressImage(file: File, maxWidth = 1200, quality = 0.80): Promise<File> {
   if (typeof window === "undefined" || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  // Se já for WebP leve (< 200 KB), não precisa reprocessar
+  if (file.type === "image/webp" && file.size < 200 * 1024) {
     return file;
   }
 
@@ -42,15 +50,22 @@ async function compressImage(file: File, maxWidth = 1440, quality = 0.85): Promi
         if (!ctx) return resolve(file);
 
         ctx.drawImage(img, 0, 0, width, height);
+
+        // Converte para WebP com compressão eficiente
         canvas.toBlob(
           (blob) => {
-            if (!blob || blob.size >= file.size) {
-              return resolve(file);
+            if (blob) {
+              // Se o WebP gerado for menor OU o arquivo original for pesado (> 200 KB), usa o WebP
+              if (blob.size < file.size || file.size > 200 * 1024) {
+                const compressed = new File(
+                  [blob],
+                  file.name.replace(/\.[^.]+$/, ".webp"),
+                  { type: "image/webp" },
+                );
+                return resolve(compressed);
+              }
             }
-            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), {
-              type: "image/webp",
-            });
-            resolve(compressed);
+            resolve(file);
           },
           "image/webp",
           quality,
@@ -77,10 +92,12 @@ export async function uploadImageFile({
   const validationError = validateImageFile(file);
   if (validationError) throw new Error(validationError);
 
+  const isBanner = bucket === BANNER_BUCKET;
+  // Banners: máx 1440px. Produtos: máx 800px.
   const processedFile = await compressImage(
     file,
-    bucket === BANNER_BUCKET ? 1920 : 1200,
-    0.85,
+    isBanner ? 1440 : 800,
+    0.80,
   );
 
   const rawExtension = processedFile.name.split(".").pop()?.toLowerCase() ?? "webp";
@@ -95,11 +112,16 @@ export async function uploadImageFile({
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
 
-  // Pré-aquece o cache da CDN na borda imediatamente para evitar primeiro acesso lento
+  // Pré-aquece o cache da CDN na borda em segundo plano para Desktop e Mobile
   try {
-    const cdnUrl = optimizeImageUrl(data.publicUrl);
-    if (cdnUrl && typeof window !== "undefined") {
-      fetch(cdnUrl, { mode: "no-cors" }).catch(() => {});
+    if (typeof window !== "undefined") {
+      const sizes = isBanner ? [1440, 640] : [480, 800];
+      sizes.forEach((w) => {
+        const cdnUrl = optimizeImageUrl(data.publicUrl, { width: w });
+        if (cdnUrl) {
+          fetch(cdnUrl, { mode: "no-cors" }).catch(() => {});
+        }
+      });
     }
   } catch {
     // Ignora falhas de pre-warm silenciosamente
@@ -123,29 +145,27 @@ export async function removeImageByUrl(
   bucket: string,
 ): Promise<void> {
   if (!url) return;
-
   const path = objectPathFromPublicUrl(url, bucket);
   if (!path) return;
 
-  await supabase.storage.from(bucket).remove([path]);
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) {
+    console.warn(`Falha ao remover arquivo do bucket ${bucket}:`, error.message);
+  }
 }
-
-/* Fotos de produto ------------------------------------------------- */
 
 export async function uploadProductImage(file: File): Promise<string> {
   return uploadImageFile({ file, bucket: IMAGE_BUCKET, folder: "products" });
 }
 
-export async function removeProductImageByUrl(url: string | null | undefined) {
-  await removeImageByUrl(url, IMAGE_BUCKET);
+export async function removeProductImageByUrl(url: string | null | undefined): Promise<void> {
+  return removeImageByUrl(url, IMAGE_BUCKET);
 }
-
-/* Imagens de banner ------------------------------------------------- */
 
 export async function uploadBannerImage(file: File): Promise<string> {
   return uploadImageFile({ file, bucket: BANNER_BUCKET, folder: "banners" });
 }
 
-export async function removeBannerImageByUrl(url: string | null | undefined) {
-  await removeImageByUrl(url, BANNER_BUCKET);
+export async function removeBannerImageByUrl(url: string | null | undefined): Promise<void> {
+  return removeImageByUrl(url, BANNER_BUCKET);
 }

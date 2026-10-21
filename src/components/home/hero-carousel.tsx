@@ -142,12 +142,13 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
                 <article
                   className={cn(
                     "w-full",
-                    /* Só arte: a altura vem da imagem. Com texto: faixa de altura fixa. */
-                    !imageOnly &&
-                      cn(
-                        "h-[300px] sm:h-[380px] lg:h-[440px]",
-                        !multiple && "sm:h-[360px] lg:h-[420px]",
-                      ),
+                    /* Só arte: a altura vem da imagem com min-height para estabilidade. Com texto: faixa de altura fixa. */
+                    imageOnly
+                      ? "min-h-[180px] sm:min-h-[280px] lg:min-h-[360px]"
+                      : cn(
+                          "h-[300px] sm:h-[380px] lg:h-[440px]",
+                          !multiple && "sm:h-[360px] lg:h-[420px]",
+                        ),
                   )}
                 >
                   <BannerLink banner={banner}>
