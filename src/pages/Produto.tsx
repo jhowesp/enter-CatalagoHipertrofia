@@ -212,7 +212,7 @@ const Produto = () => {
           <div className="space-y-3">
             <div className="relative overflow-hidden rounded-2xl border border-border photo-surface p-6">
               <div className="aspect-square w-full">
-                <ProductImage src={activeImage} alt={product.name} priority />
+                <ProductImage src={activeImage} alt={product.name} priority width={800} />
               </div>
               {product.discountPercent > 0 && (
                 <DiscountBadge
@@ -239,7 +239,7 @@ const Produto = () => {
                       )}
                     >
                       <img
-                        src={url}
+                        src={optimizeImageUrl(url, { width: 140 }) ?? url}
                         alt=""
                         loading="lazy"
                         decoding="async"

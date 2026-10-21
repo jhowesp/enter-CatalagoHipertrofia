@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { optimizeImageUrl } from "@/lib/image-url";
 import {
   ALLOWED_IMAGE_EXTENSIONS,
   ALLOWED_IMAGE_TYPES,
@@ -93,6 +94,17 @@ export async function uploadImageFile({
   if (error) throw new Error(error.message);
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+
+  // Pré-aquece o cache da CDN na borda imediatamente para evitar primeiro acesso lento
+  try {
+    const cdnUrl = optimizeImageUrl(data.publicUrl);
+    if (cdnUrl && typeof window !== "undefined") {
+      fetch(cdnUrl, { mode: "no-cors" }).catch(() => {});
+    }
+  } catch {
+    // Ignora falhas de pre-warm silenciosamente
+  }
+
   return data.publicUrl;
 }
 
