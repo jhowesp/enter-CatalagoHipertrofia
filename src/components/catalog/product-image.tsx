@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ImageOff } from "lucide-react";
 
 import { optimizeImageUrl } from "@/lib/image-url";
@@ -9,26 +10,46 @@ type ProductImageProps = {
   /** Imagem principal da página carrega junto com o conteúdo. */
   priority?: boolean;
   className?: string;
+  width?: number;
 };
 
 /**
- * Foto do produto.
- * Sem `image_url` (produtos de demonstração) mostramos um bloco grafite neutro.
- * Com imagem, mantemos a proporção com `object-contain` sobre fundo escuro,
- * evitando cortar ou distorcer a embalagem.
+ * Foto do produto com carregamento otimizado:
+ * - Placeholder tipo esqueleto animado enquanto transfere
+ * - Transição suave (fade-in) assim que a imagem é decodificada
+ * - Fallback automático caso a CDN apresente instabilidade
+ * - Priorização de rede (fetchpriority=high) nas primeiras fotos da tela
  */
-export function ProductImage({ src, alt, priority = false, className }: ProductImageProps) {
-  if (!src) {
+export function ProductImage({
+  src,
+  alt,
+  priority = false,
+  className,
+  width,
+}: ProductImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState<string | null>(() =>
+    src ? optimizeImageUrl(src, { width }) ?? src : null,
+  );
+
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+    setCurrentSrc(src ? optimizeImageUrl(src, { width }) ?? src : null);
+  }, [src, width]);
+
+  if (!src || hasError) {
     return (
       <div
         role="img"
-        aria-label={`${alt} — foto ainda não cadastrada`}
+        aria-label={`${alt} — foto não disponível`}
         className={cn(
           "flex h-full w-full flex-col items-center justify-center gap-2 photo-surface text-muted-foreground/70",
           className,
         )}
       >
-        <ImageOff className="h-9 w-9" strokeWidth={1.4} aria-hidden />
+        <ImageOff className="h-8 w-8" strokeWidth={1.4} aria-hidden />
         <span className="text-[10px] font-semibold uppercase tracking-[0.24em]">
           Foto em breve
         </span>
@@ -36,15 +57,37 @@ export function ProductImage({ src, alt, priority = false, className }: ProductI
     );
   }
 
-  const finalSrc = optimizeImageUrl(src) ?? src;
-
   return (
-    <img
-      src={finalSrc}
-      alt={alt}
-      loading={priority ? "eager" : "lazy"}
-      decoding="async"
-      className={cn("h-full w-full object-contain", className)}
-    />
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+      {/* Esqueleto animado para feedback imediato ao usuário */}
+      {!isLoaded && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 animate-pulse rounded-lg bg-foreground/[0.04]"
+        />
+      )}
+
+      <img
+        src={currentSrc || src}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "low"}
+        decoding="async"
+        onLoad={() => setIsLoaded(true)}
+        onError={() => {
+          // Se a CDN demorar ou der erro, cai imediatamente de volta para a URL direta do Supabase
+          if (currentSrc !== src) {
+            setCurrentSrc(src);
+          } else {
+            setHasError(true);
+          }
+        }}
+        className={cn(
+          "h-full w-full object-contain transition-opacity duration-300",
+          isLoaded ? "opacity-100" : "opacity-0",
+          className,
+        )}
+      />
+    </div>
   );
 }
