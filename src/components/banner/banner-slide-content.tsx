@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { optimizeImageUrl } from "@/lib/image-url";
@@ -26,7 +27,6 @@ type BannerSlideContentProps = {
  * 1. só imagem — a arte aparece inteira, sem véu e sem nada por cima;
  * 2. imagem + texto — imagem com véu escuro para o texto ficar legível;
  * 3. só texto — fundo grafite da marca.
- * É usado no carrossel da home e na prévia do painel: um desenho só.
  */
 export function BannerSlideContent({
   data,
@@ -34,52 +34,81 @@ export function BannerSlideContent({
   showCta = true,
   className,
 }: BannerSlideContentProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
   const rawDesktopUrl = data.imageUrl;
   const rawMobileUrl = data.mobileImageUrl;
-  const optimizedDesktopUrl = optimizeImageUrl(rawDesktopUrl);
-  const optimizedMobileUrl = optimizeImageUrl(rawMobileUrl);
+  const optimizedDesktopUrl = optimizeImageUrl(rawDesktopUrl, { width: 1440, quality: 80 });
+  const optimizedMobileUrl = optimizeImageUrl(rawMobileUrl, { width: 640, quality: 80 });
 
   const hasImage = Boolean(rawDesktopUrl || rawMobileUrl);
   const hasText = Boolean(data.eyebrow || data.title || data.subtitle);
   const hasCta = showCta && Boolean(data.ctaLabel);
   const imageOnly = hasImage && !hasText && !hasCta;
 
+  const fallbackDesktop = hasError ? rawDesktopUrl : optimizedDesktopUrl ?? rawDesktopUrl;
+  const fallbackMobile = hasError ? rawMobileUrl : optimizedMobileUrl ?? rawMobileUrl;
+
   return (
     <div
       className={cn(
         "relative flex w-full items-center overflow-hidden",
-        imageOnly ? "photo-surface h-auto" : "h-full",
+        imageOnly ? "photo-surface h-auto min-h-[200px] sm:min-h-[300px] lg:min-h-[400px]" : "h-full",
         className,
       )}
     >
+      {/* Esqueleto animado de fundo enquanto o banner carrega */}
+      {hasImage && !isLoaded && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 animate-pulse bg-muted/15"
+        />
+      )}
+
       {hasImage ? (
         imageOnly ? (
-          /* Só arte: a imagem fica no fluxo, então a altura acompanha e nada é cortado.
-             O limite de segurança evita que uma arte muito alta domine a tela. */
+          /* Só arte: a imagem fica no fluxo, então a altura acompanha e nada é cortado. */
           <picture className="block w-full">
-            {optimizedMobileUrl && (
-              <source media="(max-width: 640px)" srcSet={optimizedMobileUrl} />
+            {fallbackMobile && (
+              <source media="(max-width: 640px)" srcSet={fallbackMobile} />
             )}
             <img
-              src={optimizedDesktopUrl ?? (optimizedMobileUrl || (rawDesktopUrl as string))}
+              src={fallbackDesktop ?? (fallbackMobile || (rawDesktopUrl as string))}
               alt=""
               loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : "low"}
               decoding="async"
-              className="h-auto max-h-[70vh] w-full object-contain sm:max-h-[560px]"
+              onLoad={() => setIsLoaded(true)}
+              onError={() => {
+                if (!hasError) setHasError(true);
+              }}
+              className={cn(
+                "h-auto max-h-[70vh] w-full object-contain transition-opacity duration-300 sm:max-h-[560px]",
+                isLoaded ? "opacity-100" : "opacity-0",
+              )}
             />
           </picture>
         ) : (
           <>
             <picture className="absolute inset-0 block h-full w-full">
-              {optimizedMobileUrl && (
-                <source media="(max-width: 640px)" srcSet={optimizedMobileUrl} />
+              {fallbackMobile && (
+                <source media="(max-width: 640px)" srcSet={fallbackMobile} />
               )}
               <img
-                src={optimizedDesktopUrl ?? (optimizedMobileUrl || (rawDesktopUrl as string))}
+                src={fallbackDesktop ?? (fallbackMobile || (rawDesktopUrl as string))}
                 alt=""
                 loading={priority ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "low"}
                 decoding="async"
-                className="h-full w-full object-cover"
+                onLoad={() => setIsLoaded(true)}
+                onError={() => {
+                  if (!hasError) setHasError(true);
+                }}
+                className={cn(
+                  "h-full w-full object-cover transition-opacity duration-300",
+                  isLoaded ? "opacity-100" : "opacity-0",
+                )}
               />
             </picture>
             <div
