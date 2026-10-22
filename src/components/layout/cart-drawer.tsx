@@ -13,6 +13,7 @@ import {
 import { QUOTE_NOTICE } from "@/config/store";
 import { useQuoteCart } from "@/context/quote-cart";
 import { formatCurrency } from "@/lib/format";
+import { optimizeImageUrl } from "@/lib/image-url";
 
 export function CartDrawer() {
   const {
@@ -64,7 +65,7 @@ export function CartDrawer() {
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md photo-surface p-1.5">
                   {item.imageUrl ? (
                     <img
-                      src={item.imageUrl}
+                      src={optimizeImageUrl(item.imageUrl, { width: 120 }) ?? item.imageUrl}
                       alt={item.name}
                       loading="lazy"
                       decoding="async"

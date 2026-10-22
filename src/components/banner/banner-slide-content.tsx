@@ -40,7 +40,9 @@ export function BannerSlideContent({
   const rawDesktopUrl = data.imageUrl;
   const rawMobileUrl = data.mobileImageUrl;
   const optimizedDesktopUrl = optimizeImageUrl(rawDesktopUrl, { width: 1440, quality: 80 });
-  const optimizedMobileUrl = optimizeImageUrl(rawMobileUrl, { width: 640, quality: 80 });
+  const optimizedMobileUrl =
+    optimizeImageUrl(rawMobileUrl, { width: 640, quality: 80 }) ||
+    optimizeImageUrl(rawDesktopUrl, { width: 640, quality: 80 });
 
   const hasImage = Boolean(rawDesktopUrl || rawMobileUrl);
   const hasText = Boolean(data.eyebrow || data.title || data.subtitle);

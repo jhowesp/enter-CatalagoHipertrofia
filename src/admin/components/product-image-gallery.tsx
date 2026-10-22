@@ -9,6 +9,7 @@ import {
   validateImageFile,
 } from "@/services/storage";
 import { cn } from "@/lib/utils";
+import { optimizeImageUrl } from "@/lib/image-url";
 
 type ProductImageGalleryProps = {
   value: string[];
@@ -131,7 +132,7 @@ export function ProductImageGallery({
                 )}
               >
                 <img
-                  src={url}
+                  src={optimizeImageUrl(url, { width: 160 }) ?? url}
                   alt={`Foto ${index + 1} do produto`}
                   loading="lazy"
                   decoding="async"

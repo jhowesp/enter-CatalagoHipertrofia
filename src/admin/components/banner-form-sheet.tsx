@@ -23,6 +23,7 @@ import {
   validateImageFile,
 } from "@/services/storage";
 import { isSafeBannerHref, type Banner, type BannerInput } from "@/types/banner";
+import { optimizeImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 
 type FormState = {
@@ -293,7 +294,7 @@ export function BannerFormSheet({
                 <div className="h-20 w-36 shrink-0 overflow-hidden rounded-lg border border-border photo-surface">
                   {form.imageUrl ? (
                     <img
-                      src={form.imageUrl}
+                      src={optimizeImageUrl(form.imageUrl, { width: 300 }) ?? form.imageUrl}
                       alt="Prévia Desktop"
                       loading="lazy"
                       decoding="async"
@@ -369,7 +370,7 @@ export function BannerFormSheet({
                 <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border photo-surface">
                   {form.mobileImageUrl ? (
                     <img
-                      src={form.mobileImageUrl}
+                      src={optimizeImageUrl(form.mobileImageUrl, { width: 200 }) ?? form.mobileImageUrl}
                       alt="Prévia Mobile"
                       loading="lazy"
                       decoding="async"
