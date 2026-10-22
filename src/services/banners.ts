@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { mapBanner, serializeBannerImages, type Banner, type BannerInput } from "@/types/banner";
 
-const BANNERS_CACHE_KEY = "hipertrofia_active_banners_v1";
+const BANNERS_CACHE_KEY = "hipertrofia_active_banners_v2";
 
 export const DEFAULT_INITIAL_BANNER: Banner[] = [
   {

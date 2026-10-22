@@ -21,7 +21,6 @@ import {
 import {
   listActiveBanners,
   getCachedActiveBanners,
-  DEFAULT_INITIAL_BANNER,
 } from "@/services/banners";
 
 const Home = () => {
@@ -57,11 +56,14 @@ const Home = () => {
     queryFn: listBrands,
   });
 
-  // Carrossel de banners quando houver campanha ativa; com carregamento instantâneo via initialData
+  // Carrossel de banners sincronizado com o banco e com placeholder instantâneo do cache
   const { data: banners = [], isLoading: loadingBanners } = useQuery({
     queryKey: ["banners", "active"],
     queryFn: listActiveBanners,
-    initialData: () => getCachedActiveBanners() ?? DEFAULT_INITIAL_BANNER,
+    placeholderData: () => getCachedActiveBanners() ?? undefined,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const storeJsonLd = useMemo(

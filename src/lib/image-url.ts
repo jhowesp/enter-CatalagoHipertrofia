@@ -3,8 +3,12 @@
  * Entrega instantânea (~10ms a 25ms) para todo o catálogo atual sem passar por servidores distantes.
  */
 const STATIC_EDGE_ASSETS: Record<string, string> = {
-  // Banner Lipo Super HD
+  // Banners
   "785e91c9-7d55-48b9-b967-45a42f9245c9.png": "/catalog-images/banners/lipo-super-hd.webp",
+  "11cef8ed-3e36-4d3a-b220-5e0cff015195.webp": "/catalog-images/banners/lipo-super-hd.webp",
+  "9562d0aa-e315-48ad-8547-fd13eb9a4b26.webp": "/catalog-images/banners/lipo-super-hd-mobile.webp",
+  "97763eae-4649-4a24-a66e-96d41806b820.webp": "/catalog-images/banners/banner-2-desktop.webp",
+  "91c972c7-3ca2-4db7-a456-415313820349.webp": "/catalog-images/banners/banner-2-mobile.webp",
 
   // Todos os 27 produtos do catálogo oficial
   "ded20c6e-7d2f-42a8-9eef-bbb8f430cc55.png": "/catalog-images/products/protein-crush-900g-under-labz.webp",
