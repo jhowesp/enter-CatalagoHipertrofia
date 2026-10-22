@@ -1,6 +1,15 @@
 {
   "headers": [
     {
+      "source": "/catalog-images/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/supabase-storage/(.*)",
       "headers": [
         {
@@ -41,7 +50,7 @@
       "destination": "https://spb-t4n3zw7otj123173.supabase.opentrust.net/storage/v1/object/public/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|catalog-images/|brand/|.*\\.[\\w]+$).*)",
       "destination": "/index.html"
     }
   ]
