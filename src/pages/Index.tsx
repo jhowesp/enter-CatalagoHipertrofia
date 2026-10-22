@@ -18,7 +18,11 @@ import {
   listFeaturedProducts,
   listOfferProducts,
 } from "@/services/catalog";
-import { listActiveBanners } from "@/services/banners";
+import {
+  listActiveBanners,
+  getCachedActiveBanners,
+  DEFAULT_INITIAL_BANNER,
+} from "@/services/banners";
 
 const Home = () => {
   const addToQuote = useAddToQuote();
@@ -53,10 +57,12 @@ const Home = () => {
     queryFn: listBrands,
   });
 
-  // Carrossel de banners quando houver campanha ativa; senão, o banner fixo da marca.
-  const { data: banners = [] } = useQuery({
+  // Carrossel de banners quando houver campanha ativa; com carregamento instantâneo via initialData
+  const { data: banners = [], isLoading: loadingBanners } = useQuery({
     queryKey: ["banners", "active"],
     queryFn: listActiveBanners,
+    initialData: () => getCachedActiveBanners() ?? DEFAULT_INITIAL_BANNER,
+    staleTime: 1000 * 60 * 5,
   });
 
   const storeJsonLd = useMemo(
@@ -87,7 +93,13 @@ const Home = () => {
 
   return (
     <PageShell>
-      {banners.length > 0 ? <HeroCarousel banners={banners} /> : <Hero />}
+      {banners.length > 0 ? (
+        <HeroCarousel banners={banners} />
+      ) : loadingBanners ? (
+        <div className="w-full min-h-[200px] sm:min-h-[300px] lg:min-h-[400px] animate-pulse bg-muted/15" />
+      ) : (
+        <Hero />
+      )}
 
       <div className="container space-y-14 py-12">
         <section>
