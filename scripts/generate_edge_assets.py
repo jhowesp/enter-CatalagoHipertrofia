@@ -92,3 +92,4 @@ for p in PRODUCTS:
 
 total_bytes = sum(f.stat().st_size for f in PROD_DIR.glob("*.webp")) + sum(f.stat().st_size for f in BANNER_DIR.glob("*.webp"))
 print(f"\nCONCLUÍDO! Tamanho total de todas as 28 imagens somadas: {total_bytes/1024:.1f} KB!", flush=True)
+
