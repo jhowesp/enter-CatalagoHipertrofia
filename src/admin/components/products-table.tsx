@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { STORE } from "@/config/store";
 import { formatCurrency } from "@/lib/format";
+import { optimizeImageUrl } from "@/lib/image-url";
 import type { BrandRow, CategoryRow, ProductRow } from "@/types/catalog";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +27,7 @@ function ProductThumb({ product }: { product: ProductRow }) {
     <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-border photo-surface p-1">
       {product.image_url ? (
         <img
-          src={product.image_url}
+          src={optimizeImageUrl(product.image_url, { width: 100 }) ?? product.image_url}
           alt={product.name}
           loading="lazy"
           decoding="async"

@@ -8,6 +8,7 @@ import { QUOTE_NOTICE } from "@/config/store";
 import { useQuoteCart } from "@/context/quote-cart";
 import { useSeo } from "@/hooks/use-seo";
 import { formatCurrency } from "@/lib/format";
+import { optimizeImageUrl } from "@/lib/image-url";
 
 const Orcamento = () => {
   const { items, setQuantity, removeItem, clear, totalUnits, totalValue } =
@@ -63,7 +64,7 @@ const Orcamento = () => {
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg photo-surface p-2">
                     {item.imageUrl ? (
                       <img
-                        src={item.imageUrl}
+                        src={optimizeImageUrl(item.imageUrl, { width: 160 }) ?? item.imageUrl}
                         alt={item.name}
                         loading="lazy"
                         decoding="async"
