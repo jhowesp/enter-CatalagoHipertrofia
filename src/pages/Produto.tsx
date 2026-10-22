@@ -16,6 +16,7 @@ import { QUOTE_NOTICE, STORE } from "@/config/store";
 import { useAddToQuote } from "@/hooks/use-add-to-quote";
 import { useSeo } from "@/hooks/use-seo";
 import { formatCurrency, inventoryLabel } from "@/lib/format";
+import { optimizeImageUrl } from "@/lib/image-url";
 import { buildProductMessage, whatsappUrl } from "@/lib/whatsapp";
 import { getProductBySlug, listProductVariants, listRelatedProducts } from "@/services/catalog";
 import { cn } from "@/lib/utils";
