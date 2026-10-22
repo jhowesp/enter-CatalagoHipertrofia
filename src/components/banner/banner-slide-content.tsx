@@ -49,8 +49,17 @@ export function BannerSlideContent({
   const hasCta = showCta && Boolean(data.ctaLabel);
   const imageOnly = hasImage && !hasText && !hasCta;
 
-  const fallbackDesktop = hasError ? rawDesktopUrl : optimizedDesktopUrl ?? rawDesktopUrl;
-  const fallbackMobile = hasError ? rawMobileUrl : optimizedMobileUrl ?? rawMobileUrl;
+  const fallbackDesktop = hasError
+    ? (rawDesktopUrl && rawDesktopUrl.startsWith("http")
+        ? `https://wsrv.nl/?url=${encodeURIComponent(rawDesktopUrl.split("?")[0])}&w=1200&output=webp&q=75&we=1`
+        : rawDesktopUrl)
+    : optimizedDesktopUrl ?? rawDesktopUrl;
+
+  const fallbackMobile = hasError
+    ? (rawMobileUrl && rawMobileUrl.startsWith("http")
+        ? `https://wsrv.nl/?url=${encodeURIComponent(rawMobileUrl.split("?")[0])}&w=640&output=webp&q=75&we=1`
+        : rawMobileUrl)
+    : optimizedMobileUrl ?? rawMobileUrl;
 
   return (
     <div

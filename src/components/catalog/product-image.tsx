@@ -75,9 +75,11 @@ export function ProductImage({
         decoding="async"
         onLoad={() => setIsLoaded(true)}
         onError={() => {
-          // Se a CDN demorar ou der erro, cai imediatamente de volta para a URL direta do Supabase
-          if (currentSrc !== src) {
-            setCurrentSrc(src);
+          // Se a imagem falhar, cai para a CDN otimizada wsrv.nl em baixa resolução (400px WebP)
+          // NUNCA cai para o PNG original pesado do Supabase diretamente
+          if (currentSrc && !currentSrc.includes("wsrv.nl") && src && src.startsWith("http")) {
+            const clean = src.split("?")[0];
+            setCurrentSrc(`https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=400&output=webp&q=75&we=1`);
           } else {
             setHasError(true);
           }
