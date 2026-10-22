@@ -81,7 +81,7 @@ export function mapBanner(row: BannerRow): Banner {
     imageUrl: optimizeImageUrl(desktop),
     mobileImageUrl: optimizeImageUrl(mobile),
     ctaLabel: row.cta_label?.trim() ? row.cta_label.trim() : null,
-    ctaHref: row.cta_href?.trim() ? row.cta_href.trim() : null,
+    ctaHref: normalizeBannerHref(row.cta_href),
     active: row.active,
     position: row.position,
     isDemo: row.is_demo,
@@ -106,8 +106,21 @@ export function isImageOnlyBanner(
   );
 }
 
+/** Normaliza e garante que qualquer link (com ou sem barra, http, www) funcione perfeitamente. */
+export function normalizeBannerHref(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (/^javascript:/i.test(trimmed)) return null;
+  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("www.")) return `https://${trimmed}`;
+  // Caminho relativo tipo 'produto/lipo-...' ou 'catalogo'
+  return `/${trimmed}`;
+}
+
 /** Link de destino seguro: interno ou http(s). Qualquer outro esquema é descartado. */
 export function isSafeBannerHref(href: string | null): boolean {
   if (!href) return false;
-  return href.startsWith("/") || /^https?:\/\//i.test(href);
+  return Boolean(normalizeBannerHref(href));
 }

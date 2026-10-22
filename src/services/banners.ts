@@ -12,7 +12,7 @@ export const DEFAULT_INITIAL_BANNER: Banner[] = [
     imageUrl: "/catalog-images/banners/lipo-super-hd.webp",
     mobileImageUrl: "/catalog-images/banners/lipo-super-hd-mobile.webp",
     ctaLabel: null,
-    ctaHref: null,
+    ctaHref: "/produto/lipo-super-hd-termogenico",
     active: true,
     position: 0,
     isDemo: false,

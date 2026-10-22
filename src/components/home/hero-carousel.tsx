@@ -12,7 +12,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { STORE } from "@/config/store";
-import { bannerLabel, isImageOnlyBanner, isSafeBannerHref, type Banner } from "@/types/banner";
+import { bannerLabel, isImageOnlyBanner, normalizeBannerHref, type Banner } from "@/types/banner";
 import { cn } from "@/lib/utils";
 
 const AUTOPLAY_MS = 6000;
@@ -42,18 +42,19 @@ function BannerLink({
   banner: Banner;
   children: React.ReactNode;
 }) {
-  if (!banner.ctaHref || !isSafeBannerHref(banner.ctaHref)) return <>{children}</>;
+  const targetHref = normalizeBannerHref(banner.ctaHref);
+  if (!targetHref) return <>{children}</>;
 
-  const isExternal = /^https?:\/\//i.test(banner.ctaHref);
+  const isExternal = /^https?:\/\//i.test(targetHref);
 
   if (isExternal) {
     return (
       <a
-        href={banner.ctaHref}
+        href={targetHref}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={bannerLabel(banner)}
-        className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="block h-full w-full select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {children}
       </a>
@@ -62,9 +63,9 @@ function BannerLink({
 
   return (
     <Link
-      to={banner.ctaHref}
+      to={targetHref}
       aria-label={bannerLabel(banner)}
-      className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="block h-full w-full select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {children}
     </Link>
@@ -119,7 +120,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
 
       <Carousel
         setApi={setApi}
-        opts={{ loop: multiple, align: "start" }}
+        opts={{ loop: multiple, align: "start", watchDrag: multiple }}
         className="relative w-full"
         aria-roledescription="carousel"
         aria-label="Destaques e promoções da loja"

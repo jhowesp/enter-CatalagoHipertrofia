@@ -95,7 +95,7 @@ export function BannerSlideContent({
                 if (!hasError) setHasError(true);
               }}
               className={cn(
-                "h-auto max-h-[70vh] w-full object-contain transition-opacity duration-300 sm:max-h-[560px]",
+                "h-auto max-h-[70vh] w-full object-contain pointer-events-none select-none transition-opacity duration-300 sm:max-h-[560px]",
                 isLoaded ? "opacity-100" : "opacity-0",
               )}
             />
@@ -117,7 +117,7 @@ export function BannerSlideContent({
                   if (!hasError) setHasError(true);
                 }}
                 className={cn(
-                  "h-full w-full object-cover transition-opacity duration-300",
+                  "h-full w-full object-cover pointer-events-none select-none transition-opacity duration-300",
                   isLoaded ? "opacity-100" : "opacity-0",
                 )}
               />

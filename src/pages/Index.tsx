@@ -62,7 +62,6 @@ const Home = () => {
     queryKey: ["banners", "active"],
     queryFn: listActiveBanners,
     initialData: () => getCachedActiveBanners() ?? DEFAULT_INITIAL_BANNER,
-    staleTime: 1000 * 60 * 5,
   });
 
   const storeJsonLd = useMemo(
