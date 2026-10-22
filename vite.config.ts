@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
     base: '/',
     build: {
       outDir: 'dist',
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           // Separa os fornecedores em blocos próprios: o navegador reaproveita o cache
